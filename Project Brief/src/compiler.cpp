@@ -13,7 +13,7 @@ void compile(std::ostream &w)
 
 
 
-TokenValue yylval;
+
 
 int main(int argc, char **argv)
 {

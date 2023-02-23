@@ -2,8 +2,9 @@
 #include "../include/lexer.hpp"
 #include <iostream>
 
-
+TokenValue yylval;
 void lex(std::string source){
+    
     extern FILE *yyin;
     yyin = fopen(source.c_str(), "r");
     std::ofstream lexerOutput;
