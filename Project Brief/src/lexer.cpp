@@ -33,8 +33,12 @@ void lex(std::string source){
                 lexerOutput << "Keyword: " << *yylval.keywordValue << std::endl;
                 delete yylval.keywordValue;
         }
+            else if (type == Literal) {
+                lexerOutput << "Literal: " << yylval.literalValue << std::endl;
+
+            }
     }
-        std::cout<<"Lexing done: "<<std::endl;
+        std::cout<<"Lexing done"<<std::endl;
 
 }
 }

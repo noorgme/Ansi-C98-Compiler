@@ -22,9 +22,13 @@ extern "C" int fileno(FILE *stream);
 %%
 
 
-[if]+ { 
+[int]+|[if]+|[while]+ { 
    yylval.keywordValue = new std::string(yytext);
    return Keyword; 
+}
+[1-9]+ {
+    yylval.literalValue = std::stod(yytext);
+    return Literal;
 }
 
 
