@@ -8,14 +8,27 @@ enum TokenType{
     Keyword, // token codes must be positive
     Identifier,  // = 2, implicit from C++ enumeration
     Operator,
-    Literal,
-    Delimiter
+    //Punctuators
+    leftBracket,
+    rightBracket,
+    leftBrace,
+    righBrace,
+    leftsqBracket,
+    rightsqBracket,
+
+    intLiteral,
+    floatLiteral,
+    charLiteral,
+    stringLiteral
+    
 };
 
 union TokenValue{
-    //double numberValue;
-    std::string *keywordValue;
-    double literalValue;
+    std::string *keywordVal;
+    double floatVal;
+    int intVal;
+    char* punctuatorVal;
+
 };
 
 // This is a global variable used to move the
