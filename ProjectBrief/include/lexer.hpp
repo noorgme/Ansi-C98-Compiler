@@ -29,6 +29,7 @@ union TokenValue{
     int intVal;
     char* punctuatorVal;
     std::string *identifierVal;
+    std::string *stringVal;
 
 };
 

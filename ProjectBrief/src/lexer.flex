@@ -30,7 +30,17 @@ extern "C" int fileno(FILE *stream);
     yylval.intVal = std::stod(yytext);
     return intLiteral;
 }
-[}]|[{]|[)]|[(]|[\[]|[\]] {
+
+\"[^\"]*\" {
+   yylval.stringVal = new std::string(yytext);
+   if ((*yylval.stringVal).substr(0,1) == "\""){
+   (*yylval.stringVal).erase(0,1);
+   (*yylval.stringVal).erase((*yylval.stringVal).length() - 1);
+   return stringLiteral;
+}
+}
+
+[}]|[{]|[)]|[(]|[\[]|[\]]|[;]|[:] {
    yylval.punctuatorVal = strdup(yytext);
    if (*(yylval.punctuatorVal) == '('){
       return leftBracket;

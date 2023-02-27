@@ -42,6 +42,11 @@ void lex(std::string source){
                 lexerOutput << "intLiteral: " << yylval.intVal << std::endl;
                
             }
+
+            else if (type == stringLiteral){
+                lexerOutput << "stringLiteral: " << *yylval.stringVal << std::endl;
+                delete yylval.stringVal;
+            }
             else if (type == leftBracket){
                 lexerOutput << "leftBracket: " << *yylval.punctuatorVal << std::endl;
                 delete yylval.punctuatorVal;
