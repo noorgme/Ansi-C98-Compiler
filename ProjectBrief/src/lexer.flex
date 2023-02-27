@@ -54,6 +54,12 @@ extern "C" int fileno(FILE *stream);
       return -1;
    }
 }
+
+[a-zA-Z_]+ {
+   yylval.identifierVal = new std::string(yytext);
+   return Identifier; 
+}
+
 [ \t\r\n]+		{;}
 
 

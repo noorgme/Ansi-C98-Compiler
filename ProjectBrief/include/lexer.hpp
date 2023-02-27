@@ -28,6 +28,7 @@ union TokenValue{
     double floatVal;
     int intVal;
     char* punctuatorVal;
+    std::string *identifierVal;
 
 };
 

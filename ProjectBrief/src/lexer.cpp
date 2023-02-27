@@ -31,13 +31,42 @@ void lex(std::string source){
 
         }
             else if (type == Keyword) {
-                lexerOutput << "Keyword: " << *yylval.keywordValue << std::endl;
-                delete yylval.keywordValue;
+                lexerOutput << "Keyword: " << *yylval.keywordVal << std::endl;
+                delete yylval.keywordVal;
         }
-            else if (type == Literal) {
-                lexerOutput << "Literal: " << yylval.literalValue << std::endl;
-
+        else if (type == Identifier){
+            lexerOutput << "Identifier: " << *yylval.identifierVal << std::endl;
+            delete yylval.identifierVal;
+        }
+            else if (type == intLiteral) {
+                lexerOutput << "intLiteral: " << yylval.intVal << std::endl;
+               
             }
+            else if (type == leftBracket){
+                lexerOutput << "leftBracket: " << *yylval.punctuatorVal << std::endl;
+                delete yylval.punctuatorVal;
+            }
+            else if (type == rightBracket){
+                lexerOutput << "rightBracket: " << *yylval.punctuatorVal << std::endl;
+                delete yylval.punctuatorVal;
+            }
+            else if (type == leftBrace){
+                lexerOutput << "leftBrace: " << *yylval.punctuatorVal << std::endl;
+                delete yylval.punctuatorVal;
+            }
+            else if (type == rightBrace){
+                lexerOutput << "rightBrace: " << *yylval.punctuatorVal << std::endl;
+                delete yylval.punctuatorVal;
+            }
+            else if (type == rightsqBracket){
+                lexerOutput << "rightsqBracket: " << *yylval.punctuatorVal << std::endl;
+                delete yylval.punctuatorVal;
+            }
+            else if (type == leftsqBracket){
+                lexerOutput << "leftsqBracket: " << *yylval.punctuatorVal << std::endl;
+                delete yylval.punctuatorVal;
+            }
+
     }
         std::cout<<"Lexing done"<<std::endl;
 
