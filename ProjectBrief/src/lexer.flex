@@ -26,19 +26,37 @@ extern "C" int fileno(FILE *stream);
    yylval.keywordVal = new std::string(yytext);
    return Keyword; 
 }
-[1-9]+ {
+[1-9]+ { //TODO
     yylval.intVal = std::stod(yytext);
     return intLiteral;
 }
-[}]|[{]|[)]|[(] {
+[}]|[{]|[)]|[(]|[\[]|[\]] {
    yylval.punctuatorVal = strdup(yytext);
    if (*(yylval.punctuatorVal) == '('){
       return leftBracket;
    }
-   else{
+   else if (*(yylval.punctuatorVal) == ')'){
       return rightBracket;
    }
+   else if (*(yylval.punctuatorVal) == '{'){
+      return leftBrace;
+   }
+   else if (*(yylval.punctuatorVal) == '}'){
+      return rightBrace;
+   }
+   else if (*(yylval.punctuatorVal) == '['){
+      return leftsqBracket;
+   }
+   else if (*(yylval.punctuatorVal) == ']'){
+      return rightsqBracket;
+   }
+   else{
+      return -1;
+   }
 }
+[ \t\r\n]+		{;}
+
+
 
 
 %%

@@ -12,10 +12,10 @@ enum TokenType{
     leftBracket,
     rightBracket,
     leftBrace,
-    righBrace,
+    rightBrace,
     leftsqBracket,
     rightsqBracket,
-
+    //Literals
     intLiteral,
     floatLiteral,
     charLiteral,
