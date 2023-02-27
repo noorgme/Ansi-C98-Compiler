@@ -22,7 +22,7 @@ extern "C" int fileno(FILE *stream);
 %%
 
 
-[int]+|[if]+|[while]+ { 
+[int]+|[if]+|[while]+|[for]+|[return]+|[float]+|[double]+|[char]+|[bool]+|[void]+|[do]+ { 
    yylval.keywordValue = new std::string(yytext);
    return Keyword; 
 }
