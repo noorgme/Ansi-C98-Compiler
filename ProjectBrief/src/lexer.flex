@@ -26,9 +26,48 @@ extern "C" int fileno(FILE *stream);
    yylval.keywordVal = new std::string(yytext);
    return Keyword; 
 }
-[1-9]+ {
-    yylval.literalValue = std::stod(yytext);
-    return Literal;
+[1-9]+ { //TODO
+    yylval.intVal = std::stod(yytext);
+    return intLiteral;
+}
+
+\"[^\"]*\" {
+   yylval.stringVal = new std::string(yytext);
+   if ((*yylval.stringVal).substr(0,1) == "\""){
+   (*yylval.stringVal).erase(0,1);
+   (*yylval.stringVal).erase((*yylval.stringVal).length() - 1);
+   return stringLiteral;
+}
+}
+
+[}]|[{]|[)]|[(]|[\[]|[\]]|[;]|[:] {
+   yylval.punctuatorVal = strdup(yytext);
+   if (*(yylval.punctuatorVal) == '('){
+      return leftBracket;
+   }
+   else if (*(yylval.punctuatorVal) == ')'){
+      return rightBracket;
+   }
+   else if (*(yylval.punctuatorVal) == '{'){
+      return leftBrace;
+   }
+   else if (*(yylval.punctuatorVal) == '}'){
+      return rightBrace;
+   }
+   else if (*(yylval.punctuatorVal) == '['){
+      return leftsqBracket;
+   }
+   else if (*(yylval.punctuatorVal) == ']'){
+      return rightsqBracket;
+   }
+   else{
+      return -1;
+   }
+}
+
+[a-zA-Z_]+ {
+   yylval.identifierVal = new std::string(yytext);
+   return Identifier; 
 }
 
 [ \t\r\n]+		{;}
