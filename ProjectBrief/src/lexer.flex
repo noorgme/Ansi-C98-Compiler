@@ -22,18 +22,18 @@ extern "C" int fileno(FILE *stream);
 %%
 
 
-[int]+|[if]+|[while]+|[for]+|[return]+|[float]+|[double]+|[char]+|[bool]+|[void]+|[do]+ { //keywords, need to specify this has priority over identifiers
-   yylval.keywordValue = new std::string(yytext);
+[int]+|[if]+|[while]+|[for]+|[return]+|[float]+|[double]+|[char]+|[bool]+|[void]+|[do]+|[else]+|[struct]+|[switch]+|[continue]+|[sizeof]+|[enum]+|[register]+ { 
+   yylval.keywordVal = new std::string(yytext);
    return Keyword; 
 }
 [1-9]+ {
     yylval.literalValue = std::stod(yytext);
     return Literal;
 }
-[A-Za-z_][A-Za-z0-9_]* {      //for identifiers (variable and function names)
-   yylval.idValue = std::string(yytext);
-   return Identifier;
-}
+
+[ \t\r\n]+		{;}
+
+
 
 
 %%
