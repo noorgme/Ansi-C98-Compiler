@@ -1,3 +1,23 @@
+%code requires{
+  #include "ast.hpp"
+
+  #include <cassert>
+
+  extern const Expression *g_root; // A way of getting the AST out
+
+  //! This is to fix problems when generating C++
+  // We are declaring the functions provided by Flex, so
+  // that Bison generated code can call them.
+  int yylex(void);
+  void yyerror(const char *);
+}
+
+%union{
+  const Expression *expr;
+  double number;
+  std::string *string;
+}
+
 %token	IDENTIFIER I_CONSTANT F_CONSTANT STRING_LITERAL FUNC_NAME SIZEOF
 %token	PTR_OP INC_OP DEC_OP LEFT_OP RIGHT_OP LE_OP GE_OP EQ_OP NE_OP
 %token	AND_OP OR_OP MUL_ASSIGN DIV_ASSIGN MOD_ASSIGN ADD_ASSIGN
@@ -17,6 +37,28 @@
 
 %start translation_unit
 %%
+
+/* Top of the tree: translation_unit */
+
+translation_unit 
+	: external_declaration
+	| translation_unit external_declaration
+	;
+
+external_declaration
+	: function_definition
+	| declaration
+	;
+
+function_definition
+	: declaration_specifiers declarator declaration_list compound_statement
+	| declaration_specifiers declarator compound_statement
+	;
+
+declaration_list
+	: declaration
+	| declaration_list declaration
+	;
 
 primary_expression
 	: IDENTIFIER
@@ -230,7 +272,7 @@ type_specifier
 	: VOID
 	| CHAR
 	| SHORT
-	| INT
+	| INT ($$ = new Declaration($1))
 	| LONG
 	| FLOAT
 	| DOUBLE
@@ -503,27 +545,6 @@ jump_statement
 	| RETURN ';'
 	| RETURN expression ';'
 	;
-
-translation_unit
-	: external_declaration
-	| translation_unit external_declaration
-	;
-
-external_declaration
-	: function_definition
-	| declaration
-	;
-
-function_definition
-	: declaration_specifiers declarator declaration_list compound_statement
-	| declaration_specifiers declarator compound_statement
-	;
-
-declaration_list
-	: declaration
-	| declaration_list declaration
-	;
-
 %%
 #include <stdio.h>
 
