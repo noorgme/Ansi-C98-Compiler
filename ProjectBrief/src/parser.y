@@ -6,6 +6,7 @@
 #include <cassert>
 
 extern const ASTNode *g_root;
+extern FILE *yyin;
 
 int yylex(void);
 void yyerror(const char *);
@@ -475,10 +476,16 @@ jump_statement
 
 const ASTNode *g_root; // Definition of variable (to match declaration earlier)
 
-const ASTNode *parseAST()
-{
-  g_root=0;
-  yyparse();
-  return g_root;
+const ASTNode *parseAST(std::string file){
+	yyin = fopen(file.c_str(), "r");
+	if(yyin == NULL){
+		std::cerr << "Couldn't open input file: " << file << std::endl;
+		
+	}
+	
+	g_root=0;
+	yyparse();
+	return g_root;
+	
 }
 

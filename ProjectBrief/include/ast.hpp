@@ -2,7 +2,9 @@
 #define ast_hpp
 
 #include <stdio.h>
+#include <fstream>
 #include <iostream>
+
 
 class ASTNode
 {
@@ -12,6 +14,7 @@ public:
 };
 
 typedef const ASTNode *ASTNodePtr;
+extern const ASTNode *parseAST(std::string file);
 class Return: public ASTNode
 {
 public:
@@ -21,6 +24,7 @@ public:
     void compile(std::ostream& os, int dstReg) const override {
         // expression->compile(os, dstReg);
         os << "returning"<<std::endl;
+        
     }
 private:
      ASTNodePtr expression;
@@ -32,6 +36,7 @@ public:
     IdentType(std::string* in_str){
         str = in_str;
         std::cout << "IdentType called" << std::endl;
+
     }
     void compile(std::ostream& os, int dstReg) const override {
         // expression->compile(os, dstReg);

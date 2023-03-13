@@ -1,3 +1,4 @@
+#include "ast.hpp"
 #include "cli.h"
 #include <fstream>
 #include <iostream>
@@ -6,9 +7,11 @@
 
 
 
-void compile(std::ostream &w)
+
+void compile(std::ostream &w, std::string f)
 {
-    // w << ".text" << std::endl;
+
+    const ASTNode *prog = parseAST(f);
     // w << ".globl f" << std::endl;
     // w << std::endl;
 
@@ -49,7 +52,7 @@ int main(int argc, char **argv)
 
     // Compile the input
     std::cout << "Compiling: " << sourcePath << std::endl;
-    compile(output);
+    compile(output, argv[2]);
     std::cout << "Compiled to: " << outputPath << std::endl;
 
     output.close();
