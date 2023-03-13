@@ -5,6 +5,13 @@
 #include <fstream>
 #include <iostream>
 
+static int makeNameUnq=0;
+
+static std::string makeName(std::string base)
+{
+    return "_"+base+"_"+std::to_string(makeNameUnq++);
+}
+
 
 class ASTNode
 {
@@ -14,45 +21,58 @@ public:
 };
 
 typedef const ASTNode *ASTNodePtr;
+
 extern const ASTNode *parseAST(std::string file);
+
 class Return: public ASTNode
 {
 public:
     Return(ASTNodePtr expr){
+        std::cout << "Return Called" << std::endl;
         expression = expr;
     }
     void compile(std::ostream& os, int dstReg) const override {
-        // expression->compile(os, dstReg);
-        os << "returning"<<std::endl;
+        expression->compile(os, dstReg);
+        //os << "returning" << std::endl;
         
     }
 private:
      ASTNodePtr expression;
 };
 
-class IdentType: public ASTNode
+
+class FunctionDeclaration: public ASTNode{
+    public:
+        FunctionDeclaration(ASTNodePtr expr){
+            expression = expr;
+        }
+        void compile(std::ostream& os, int dstReg) const override{
+            expression->compile(os, dstReg);
+        }
+    private:
+        ASTNodePtr expression;
+
+};
+
+class Identifier: public ASTNode
 {
 public:
-    IdentType(std::string* in_str){
+    Identifier(std::string* in_str){
         str = in_str;
-        std::cout << "IdentType called" << std::endl;
-
+        std::cout << "Identifier constructor of value: " << str << std::endl;
     }
     void compile(std::ostream& os, int dstReg) const override {
-        // expression->compile(os, dstReg);
-        os << "identifier: " << str << std::endl;
     }
 private:
-    ASTNodePtr expression;
     std::string *str;
 };
 
 
-class IntType: public ASTNode
+class IntLiteral: public ASTNode
 {
 public:
-    IntType(int number){
-        std::cout << "IntType called" << std::endl;
+    IntLiteral(int number){
+        std::cout << "IntLiteral constructor of value: " << num << std::endl;
     }
     void compile(std::ostream& os, int dstReg) const override {
         // expression->compile(os, dstReg);
@@ -64,11 +84,11 @@ private:
 
 };
 
-class IntDeclare: public ASTNode
+class IntType: public ASTNode
 {
 public:
-    IntDeclare(){
-        std::cout << "Int Declared" << std::endl;
+    IntType(){
+        std::cout << "Int Type Specifier" << std::endl;
     }
     void compile(std::ostream& os, int dstReg) const override {
         // expression->compile(os, dstReg);

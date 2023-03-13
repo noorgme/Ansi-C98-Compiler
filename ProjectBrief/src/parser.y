@@ -100,7 +100,7 @@ declaration_specifiers
 
 primary_expression
 	: IDENTIFIER
-	| CONSTANT {$$ = new IntType($1);}
+	| CONSTANT {$$ = new IntLiteral($1);}
 	| STRING_LITERAL
 	| '(' expression ')'
 	;
@@ -261,7 +261,7 @@ type_specifier
 	: VOID
 	| CHAR
 	| SHORT
-	| INT {$$ = new IntDeclare();}
+	| INT {$$ = new IntType();}
 	| LONG
 	| FLOAT
 	| DOUBLE
@@ -337,7 +337,7 @@ declarator
 	;
 
 direct_declarator
-	: IDENTIFIER { $$ = new IdentType($1);}
+	: IDENTIFIER { $$ = new Identifier($1);}
 	| '(' declarator ')'
 	| direct_declarator '[' constant_expression ']'
 	| direct_declarator '[' ']'

@@ -5,9 +5,6 @@
 #include <unistd.h>
 
 
-
-
-
 void compile(std::ostream &w, std::string f)
 {
 
