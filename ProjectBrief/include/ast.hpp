@@ -11,11 +11,11 @@ public:
     
 };
 
-
+typedef const ASTNode *ASTNodePtr;
 class Return: public ASTNode
 {
 public:
-    Return(ASTNode* expr){
+    Return(ASTNodePtr expr){
         expression = expr;
     }
     void compile(std::ostream& os, int dstReg) const override {
@@ -23,7 +23,7 @@ public:
         os << "returning"<<std::endl;
     }
 private:
-    ASTNode* expression;
+     ASTNodePtr expression;
 };
 
 class IdentType: public ASTNode
@@ -31,14 +31,14 @@ class IdentType: public ASTNode
 public:
     IdentType(std::string* in_str){
         str = in_str;
-        std::cout << "IntType called" << std::endl;
+        std::cout << "IdentType called" << std::endl;
     }
     void compile(std::ostream& os, int dstReg) const override {
         // expression->compile(os, dstReg);
         os << "identifier: " << str << std::endl;
     }
 private:
-    ASTNode *expression;
+    ASTNodePtr expression;
     std::string *str;
 };
 
@@ -54,9 +54,24 @@ public:
         os << "integer: " << num << std::endl;
     }
 private:
-    ASTNode* expression;
+    ASTNodePtr expression;
     int num;
 
 };
 
+class IntDeclare: public ASTNode
+{
+public:
+    IntDeclare(){
+        std::cout << "Int Declared" << std::endl;
+    }
+    void compile(std::ostream& os, int dstReg) const override {
+        // expression->compile(os, dstReg);
+        os << "integer: " << num << std::endl;
+    }
+private:
+    ASTNodePtr expression;
+    int num;
+
+};
 #endif

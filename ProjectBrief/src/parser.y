@@ -1,4 +1,4 @@
-%{
+%code requires{
 #include <stdio.h>
 #include <string.h>
 #include "ast.hpp"
@@ -9,11 +9,11 @@ extern const ASTNode *g_root;
 
 int yylex(void);
 void yyerror(const char *);
-%}
+}
 
 
 %union {
-  ASTNode *node;
+  const ASTNode *node;
   int num;
   std::string *str;
 }
@@ -258,7 +258,7 @@ type_specifier
 	: VOID
 	| CHAR
 	| SHORT
-	| INT {$$ = new IntType($1);}
+	| INT {$$ = new IntDeclare();}
 	| LONG
 	| FLOAT
 	| DOUBLE
@@ -473,7 +473,7 @@ jump_statement
 
 const ASTNode *g_root; // Definition of variable (to match declaration earlier)
 
-ASTNode *parseAST("input.txt")
+const ASTNode *parseAST()
 {
   g_root=0;
   yyparse();
