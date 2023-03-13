@@ -27,7 +27,7 @@ bin/compiler : src/compiler.o src/parser.tab.o src/lexer.yy.o src/parser.tab.o
 	g++ $(CPPFLAGS) -o bin/compiler $^
 	
 clean :
-	rm src/*.o -rf
-	rm bin/* -rf
-	rm src/*.tab.cpp
-	rm src/*.yy.cpp
+	rm -f src/*.o -rf
+	rm -f bin/* -rf
+	rm -f src/*.tab.cpp
+	rm -f src/*.yy.cpp

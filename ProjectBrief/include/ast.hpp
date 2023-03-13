@@ -15,8 +15,8 @@ public:
 class Return: public ASTNode
 {
 public:
-    Return(){
-
+    Return(ASTNode* expr){
+        expression = expr;
     }
     void compile(std::ostream& os, int dstReg) const override {
         // expression->compile(os, dstReg);
@@ -24,13 +24,13 @@ public:
     }
 private:
     ASTNode* expression;
-
 };
 
 class IdentType: public ASTNode
 {
 public:
-    IntType(){
+    IdentType(std::string* in_str){
+        str = in_str;
         std::cout << "IntType called" << std::endl;
     }
     void compile(std::ostream& os, int dstReg) const override {
@@ -38,9 +38,8 @@ public:
         os << "identifier: " << str << std::endl;
     }
 private:
-    ASTNode* expression;
-    std::string str;
-
+    ASTNode *expression;
+    std::string *str;
 };
 
 
