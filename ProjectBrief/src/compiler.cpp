@@ -1,8 +1,7 @@
 #include <fstream>
 #include <iostream>
 #include <unistd.h>
-#include "../include/lexer.hpp"
-#include "../include/cli.h"
+#include "cli.cpp"
 #include "lexer.cpp"
 
 void compile(std::ostream &w)

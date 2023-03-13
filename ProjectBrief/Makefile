@@ -1,34 +1,33 @@
-CPPFLAGS += -W -Wall -g -I
-# This avoids error: ‘fileno’ was not declared in this scope
-CPPFLAGS += -std=c++0x
+# CPPFLAGS += -std=c++20 -W -Wall -g -I include
 
-# Avoid warnings about yyunput not used
-CPPFLAGS += -Wno-unused-function
+# .PHONY: default
 
-.PHONY: default
+# default: bin/c_compiler
 
-all : lexer
+# bin/c_compiler : src/cli.cpp src/compiler.cpp
+# 	@mkdir -p bin
+# 	g++ $(CPPFLAGS) -o bin/c_compiler $^
 
-default: bin/c_compiler
+# clean :
+# 	rm -rf bin/*
 
-bin/c_compiler : src/cli.cpp src/compiler.cpp
-	@mkdir -p bin
-	g++ $(CPPFLAGS) -o bin/c_compiler $^
+CPPFLAGS += -std=c++11 -W -g -Wno-unused-parameter
+CPPFLAGS += -I include
 
+all : bin/compiler
 
-src/lexer.yy.cpp : src/lexer.flex include/lexer.hpp
+src/parser.tab.cpp src/parser.tab.hpp : src/parser.y
+	bison -v -d src/parser.y -o src/parser.tab.cpp
+
+src/lexer.yy.cpp : src/lexer.flex src/parser.tab.hpp
 	flex -o src/lexer.yy.cpp  src/lexer.flex
 
-lexer : src/lexer.yy.o src/compiler.o src/lexer.cpp
-	g++ $(CPPFLAGS) -o src/lexer src/lexer.yy.o src/compiler.o src/cli.cpp
-
-
+bin/compiler : src/compiler.o src/parser.tab.o src/lexer.yy.o src/parser.tab.o
+	mkdir -p bin
+	g++ $(CPPFLAGS) -o bin/compiler $^
+	
 clean :
-	-rm -f src/lexer.yy.cpp
-	-rm -f src/*.yy.cpp
-	-rm -f src/*.o
-	-rm -f src/lexer
-	-rm -f lexertests/*.o.txt
-	-rm -rf bin/*
-
-
+	rm src/*.o -rf
+	rm bin/* -rf
+	rm src/*.tab.cpp
+	rm src/*.yy.cpp
