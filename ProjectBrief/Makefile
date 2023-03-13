@@ -10,8 +10,7 @@
 
 # clean :
 # 	rm -rf bin/*
-
-CPPFLAGS += -std=c++11 -W -g -Wno-unused-parameter
+CPPFLAGS += -std=c++11 -W -Wall -g -Wno-unused-parameter
 CPPFLAGS += -I include
 
 all : bin/compiler
@@ -29,5 +28,6 @@ bin/compiler : src/compiler.o src/parser.tab.o src/lexer.yy.o src/parser.tab.o
 clean :
 	rm src/*.o -rf
 	rm bin/* -rf
-	rm src/*.tab.cpp
-	rm src/*.yy.cpp
+	rm -f src/*.tab.*
+	rm -f src/*.yy.cpp
+	rm -f parser.output
