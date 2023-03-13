@@ -258,7 +258,7 @@ type_specifier
 	: VOID
 	| CHAR
 	| SHORT
-	| INT {$$ = new IntType();}
+	| INT {$$ = new IntType($1);}
 	| LONG
 	| FLOAT
 	| DOUBLE
