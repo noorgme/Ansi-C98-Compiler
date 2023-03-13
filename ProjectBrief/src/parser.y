@@ -61,6 +61,8 @@ void yyerror(const char *);
 
 %type <str> IDENTIFIER
 
+%type <node> CASE DEFAULT IF ELSE SWITCH WHILE DO FOR GOTO CONTINUE BREAK RETURN
+
 
 %start ROOT
 
@@ -120,7 +122,7 @@ argument_expression_list
 
 unary_expression
 	: postfix_expression { $$ = $1; }
-	| INC_OP unary_expression
+	| INC_OP unary_expression 
 	| DEC_OP unary_expression
 	| unary_operator cast_expression
 	| SIZEOF unary_expression
