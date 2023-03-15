@@ -15,9 +15,11 @@ void yyerror(const char *);
 
 %union {
   const ASTNode *node;
-  int num;
-  std::string *str;
+  int number;
+  std::string* string;
 }
+
+%token INT_LITERAL
 
 %token IDENTIFIER CONSTANT STRING_LITERAL SIZEOF
 %token PTR_OP INC_OP DEC_OP LEFT_OP RIGHT_OP LE_OP GE_OP EQ_OP NE_OP
@@ -58,9 +60,9 @@ void yyerror(const char *);
 %type <node> enumerator_list parameter_list
 %type <node> identifier_list initializer_list declaration_list statement_list
 
-%type <num> CONSTANT
+%type <number> INT_LITERAL
 
-%type <str> IDENTIFIER
+%type <string> IDENTIFIER
 
 %type <node> CASE DEFAULT IF ELSE SWITCH WHILE DO FOR GOTO CONTINUE BREAK RETURN
 
@@ -100,7 +102,7 @@ declaration_specifiers
 
 primary_expression
 	: IDENTIFIER
-	| CONSTANT {$$ = new IntLiteral($1);}
+	| INT_LITERAL {$$ = new IntLiteral($1);}
 	| STRING_LITERAL
 	| '(' expression ')'
 	;

@@ -9,8 +9,9 @@ IS			(u|U|l|L)*
 
 
 %{
-    #include "parser.tab.hpp"
-
+  #include <stdio.h>
+  #include "parser.tab.hpp"
+    
 %}
 
 %%
@@ -49,12 +50,13 @@ IS			(u|U|l|L)*
 "volatile"		{ return(VOLATILE); }
 "while"			{fprintf(stderr, "while\n");return(WHILE); }
 
-{L}({L}|{D})*		{ return (IDENTIFIER); }
+{L}({L}|{D})*		{yylval.string = new std::string(yytext); return (IDENTIFIER); }
 
 0[xX]{H}+{IS}?		{ return(CONSTANT); }
 0{D}+{IS}?		{ return(CONSTANT); }
-{D}+{IS}?		{ return(CONSTANT); }
-L?'(\\.|[^\\'])+'	{ return(CONSTANT); }
+{D}+{IS}?		{ yylval.number = atoi(yytext); return(INT_LITERAL); }
+
+L?'(\\.|[^\\'])+'	{return(CONSTANT); }
 
 {D}+{E}{FS}?		{ return(CONSTANT); }
 {D}*"."{D}+({E})?{FS}?	{ return(CONSTANT); }

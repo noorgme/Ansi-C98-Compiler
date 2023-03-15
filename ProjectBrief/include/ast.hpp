@@ -57,9 +57,8 @@ class FunctionDeclaration: public ASTNode{
 class Identifier: public ASTNode
 {
 public:
-    Identifier(std::string* in_str){
-        str = in_str;
-        std::cout << "Identifier constructor of value: " << str << std::endl;
+    Identifier(std::string* in_str):str(in_str){
+        std::cout << "Identifier constructor of value: " << *str << std::endl;
     }
     void compile(std::ostream& os, int dstReg) const override {
     }
@@ -71,7 +70,7 @@ private:
 class IntLiteral: public ASTNode
 {
 public:
-    IntLiteral(int number){
+    IntLiteral(int _num):num(_num){ // :num(_num) is a shorthand way of setting the private "num" to the value of "_num" passed into the function through the parser
         std::cout << "IntLiteral constructor of value: " << num << std::endl;
     }
     void compile(std::ostream& os, int dstReg) const override {
