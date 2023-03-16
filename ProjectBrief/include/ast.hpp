@@ -31,7 +31,8 @@ public:
     }
     void compile(std::ostream& os, int dstReg) const override {
         childnode->compile(os, 10);
-        os << "returning" << std::endl;
+        os << "mv a0, a5" << std::endl;
+        os << "jr ra"<<std::endl;
         
     }
 private:
@@ -41,10 +42,9 @@ private:
 class FunctionDeclaration: public ASTNode{
     public:
         FunctionDeclaration(ASTNodePtr _declspecifier, ASTNodePtr _declarator):declarator(_declarator), declspecifier(_declspecifier){
-            std::cout << "FunctionDeclaration called" << std::endl;
+            
         }
         void compile(std::ostream& os, int dstReg) const override{
-            os << "FunctionDeclaration called" << std::endl;
             declspecifier->compile(os, dstReg);
             declarator->compile(os, dstReg);
         }
@@ -61,7 +61,6 @@ class FunctionDefinition: public ASTNode{
         void compile(std::ostream& os, int dstReg) const override{
             functdecl.compile(os, dstReg);
             statements->compile(os, dstReg);
-            os << "FunctionDefinition called" << std::endl;
         }
     private:
         FunctionDeclaration functdecl;
@@ -75,7 +74,8 @@ public:
         std::cout << "Identifier constructor of value: " << *str << std::endl;
     }
     void compile(std::ostream& os, int dstReg) const override {
-        os << "Identifier constructor of value: " << *str << std::endl;
+        os << ".globl "<<*str<<std::endl;
+        os << *str <<":"<< std::endl;
     }
 private:
     std::string *str;
@@ -89,7 +89,7 @@ public:
         std::cout << "IntLiteral constructor of value: " << num << std::endl;
     }
     void compile(std::ostream& os, int dstReg) const override {
-        os << "intliteral: " << num << std::endl;
+        os << "li, " <<dstReg<<" "<< num << std::endl;
     }
 private:
     ASTNodePtr expression;
@@ -104,7 +104,6 @@ public:
         std::cout << "IntType Specifier" << std::endl;
     }
     void compile(std::ostream& os, int dstReg) const override {
-        os << "inttype" << std::endl;
     }
 private:
     int num;
