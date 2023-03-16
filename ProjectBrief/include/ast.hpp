@@ -22,29 +22,28 @@ public:
 
 typedef const ASTNode *ASTNodePtr;
 
-extern const ASTNode *parseAST(std::string file);
+extern const ASTNode *parseAST();
 
 class Return: public ASTNode
 {
 public:
-    Return(ASTNodePtr expr){
+    Return(ASTNodePtr expr):childnode(expr){
         std::cout << "Return Called" << std::endl;
-        expression = expr;
     }
     void compile(std::ostream& os, int dstReg) const override {
-        expression->compile(os, dstReg);
+        std::cout << "compiled" << std::endl;
+        childnode->compile(os, 10);
+        std::cout << "compiled1" << std::endl;
         //os << "returning" << std::endl;
         
     }
 private:
-     ASTNodePtr expression;
+     ASTNodePtr childnode;
 };
-
 
 class FunctionDeclaration: public ASTNode{
     public:
-        FunctionDeclaration(ASTNodePtr expr){
-            expression = expr;
+        FunctionDeclaration(ASTNodePtr expr):expression(expr){
         }
         void compile(std::ostream& os, int dstReg) const override{
             expression->compile(os, dstReg);
@@ -74,7 +73,6 @@ public:
         std::cout << "IntLiteral constructor of value: " << num << std::endl;
     }
     void compile(std::ostream& os, int dstReg) const override {
-        // expression->compile(os, dstReg);
         os << "integer: " << num << std::endl;
     }
 private:
@@ -87,14 +85,12 @@ class IntType: public ASTNode
 {
 public:
     IntType(){
-        std::cout << "Int Type Specifier" << std::endl;
+        std::cout << "IntType Specifier" << std::endl;
     }
     void compile(std::ostream& os, int dstReg) const override {
-        // expression->compile(os, dstReg);
         os << "integer: " << num << std::endl;
     }
 private:
-    ASTNodePtr expression;
     int num;
 
 };

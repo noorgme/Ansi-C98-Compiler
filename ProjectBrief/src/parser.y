@@ -478,13 +478,7 @@ jump_statement
 
 const ASTNode *g_root; // Definition of variable (to match declaration earlier)
 
-const ASTNode *parseAST(std::string file){
-	yyin = fopen(file.c_str(), "r");
-	if(yyin == NULL){
-		std::cerr << "Couldn't open input file: " << file << std::endl;
-		
-	}
-	
+const ASTNode *parseAST(){
 	g_root=0;
 	yyparse();
 	return g_root;
