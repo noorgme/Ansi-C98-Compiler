@@ -17,7 +17,6 @@ class ASTNode
 {
 public:
     virtual void compile(std::ostream& os, int dstReg) const = 0;
-    
 };
 
 typedef const ASTNode *ASTNodePtr;
@@ -31,10 +30,8 @@ public:
         std::cout << "Return Called" << std::endl;
     }
     void compile(std::ostream& os, int dstReg) const override {
-        std::cout << "compiled" << std::endl;
         childnode->compile(os, 10);
-        std::cout << "compiled1" << std::endl;
-        //os << "returning" << std::endl;
+        os << "returning" << std::endl;
         
     }
 private:
@@ -43,14 +40,32 @@ private:
 
 class FunctionDeclaration: public ASTNode{
     public:
-        FunctionDeclaration(ASTNodePtr expr):expression(expr){
+        FunctionDeclaration(ASTNodePtr _declspecifier, ASTNodePtr _declarator):declarator(_declarator), declspecifier(_declspecifier){
+            std::cout << "FunctionDeclaration called" << std::endl;
         }
         void compile(std::ostream& os, int dstReg) const override{
-            expression->compile(os, dstReg);
+            os << "FunctionDeclaration called" << std::endl;
+            declspecifier->compile(os, dstReg);
+            declarator->compile(os, dstReg);
         }
     private:
-        ASTNodePtr expression;
+        ASTNodePtr declspecifier;
+        ASTNodePtr declarator;
+};
 
+class FunctionDefinition: public ASTNode{
+    public:
+        FunctionDefinition(FunctionDeclaration _functdecl, ASTNodePtr _statements):functdecl(_functdecl), statements(_statements){
+            std::cout << "FunctionDefinition called" << std::endl;
+        }
+        void compile(std::ostream& os, int dstReg) const override{
+            functdecl.compile(os, dstReg);
+            statements->compile(os, dstReg);
+            os << "FunctionDefinition called" << std::endl;
+        }
+    private:
+        FunctionDeclaration functdecl;
+        ASTNodePtr statements;
 };
 
 class Identifier: public ASTNode
@@ -60,6 +75,7 @@ public:
         std::cout << "Identifier constructor of value: " << *str << std::endl;
     }
     void compile(std::ostream& os, int dstReg) const override {
+        os << "Identifier constructor of value: " << *str << std::endl;
     }
 private:
     std::string *str;
@@ -73,7 +89,7 @@ public:
         std::cout << "IntLiteral constructor of value: " << num << std::endl;
     }
     void compile(std::ostream& os, int dstReg) const override {
-        os << "integer: " << num << std::endl;
+        os << "intliteral: " << num << std::endl;
     }
 private:
     ASTNodePtr expression;
@@ -88,7 +104,7 @@ public:
         std::cout << "IntType Specifier" << std::endl;
     }
     void compile(std::ostream& os, int dstReg) const override {
-        os << "integer: " << num << std::endl;
+        os << "inttype" << std::endl;
     }
 private:
     int num;

@@ -86,7 +86,7 @@ external_declaration
 
 function_definition
 	: declaration_specifiers declarator declaration_list compound_statement
-	| declaration_specifiers declarator compound_statement {$$=$1;} //declaration = e.g. f() put into the {}: $$ = new FunctionDefinition(FunctionDeclaration($1, $2), $3)
+	| declaration_specifiers declarator compound_statement { $$ = new FunctionDefinition(FunctionDeclaration($1, $2), $3);}
 	| declarator declaration_list compound_statement
 	| declarator compound_statement
 	;
