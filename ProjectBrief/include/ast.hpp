@@ -89,7 +89,7 @@ public:
         std::cout << "IntLiteral constructor of value: " << num << std::endl;
     }
     void compile(std::ostream& os, int dstReg) const override {
-        os << "li, " <<dstReg<<" "<< num << std::endl;
+        os << "li a5, "<< num << std::endl;
     }
 private:
     ASTNodePtr expression;
