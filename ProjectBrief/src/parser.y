@@ -268,7 +268,7 @@ type_specifier
 	| FLOAT
 	| DOUBLE
 	| SIGNED
-	| UNSIGNED
+	| UNSIGNED {$$ = new unsignedType();}
 	| struct_or_union_specifier
 	| enum_specifier
 	| TYPE_NAME

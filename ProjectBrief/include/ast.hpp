@@ -109,4 +109,18 @@ private:
     int num;
 
 };
+
+class unsignedType: public ASTNode
+{
+public:
+    unsignedType(){
+        std::cout << "unsignedType Specifier" << std::endl;
+    }
+    void compile(std::ostream& os, int dstReg) const override {
+    }
+private:
+    u_int32_t num;
+
+};
+
 #endif
