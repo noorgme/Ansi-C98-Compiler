@@ -39,17 +39,39 @@ private:
      ASTNodePtr childnode;
 };
 
+class Type : public ASTNode {
+    public:
+        enum TypeSpecifier {
+            INT,
+            UNSIGNED_INT,
+            FLOAT,
+            DOUBLE,
+            VOID
+        };
+    Type(TypeSpecifier _typeSpecifier): typeSpecifier(_typeSpecifier){}
+
+    void compile(std::ostream& os, int dstReg) const override{
+        switch (typeSpecifier){
+            case INT:
+                os << "addi sp, sp, -4" << std::endl;
+                break;
+        }
+    }
+    private:
+        TypeSpecifier typeSpecifier;
+};
+
 class FunctionDeclaration: public ASTNode{
     public:
-        FunctionDeclaration(ASTNodePtr _declspecifier, ASTNodePtr _declarator):declarator(_declarator), declspecifier(_declspecifier){
+        FunctionDeclaration(Type* _returnType, ASTNodePtr _declarator):declarator(_declarator), returnType(_returnType){
             
         }
         void compile(std::ostream& os, int dstReg) const override{
-            declspecifier->compile(os, dstReg);
+            returnType->compile(os, dstReg);
             declarator->compile(os, dstReg);
         }
     private:
-        ASTNodePtr declspecifier;
+        Type* returnType;
         ASTNodePtr declarator;
 };
 
