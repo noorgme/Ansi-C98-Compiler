@@ -4,6 +4,7 @@
 #include <stdio.h>
 #include <fstream>
 #include <iostream>
+#include <vector>
 
 static int makeNameUnq=0;
 
@@ -17,6 +18,7 @@ class ASTNode
 {
 public:
     virtual void compile(std::ostream& os, int dstReg) const = 0;
+
 };
 
 typedef const ASTNode *ASTNodePtr;
@@ -39,7 +41,7 @@ private:
      ASTNodePtr childnode;
 };
 
-class Type : public ASTNode {
+class Type: public ASTNode {
     public:
         enum TypeSpecifier {
             INT,
@@ -53,7 +55,10 @@ class Type : public ASTNode {
     void compile(std::ostream& os, int dstReg) const override{
         switch (typeSpecifier){
             case INT:
-                os << "addi sp, sp, -4" << std::endl;
+                
+                break;
+            case UNSIGNED_INT:
+                
                 break;
         }
     }
@@ -61,18 +66,38 @@ class Type : public ASTNode {
         TypeSpecifier typeSpecifier;
 };
 
+class Identifier: public ASTNode
+{
+public:
+    Identifier(std::string in_str):str(in_str){
+        std::cout << "Identifier constructor of value: " << str << std::endl;
+    }
+    void compile(std::ostream& os, int dstReg) const override {
+    }
+    std::string getID() const{
+        return str;
+    }
+private:
+    std::string str;
+};
+
 class FunctionDeclaration: public ASTNode{
     public:
-        FunctionDeclaration(Type* _returnType, ASTNodePtr _declarator):declarator(_declarator), returnType(_returnType){
+        FunctionDeclaration(Type* _returnType, ASTNodePtr _declarator):funcName(_declarator), returnType(_returnType){
             
         }
         void compile(std::ostream& os, int dstReg) const override{
+            const Identifier* identifier = dynamic_cast<const Identifier*>(funcName);
+            std::string funcID = identifier->getID();
+            os << ".globl "<< funcID << std::endl;
+            os << funcID <<":"<< std::endl;
             returnType->compile(os, dstReg);
-            declarator->compile(os, dstReg);
+            //declarator->compile(os, dstReg);
+            
         }
     private:
         Type* returnType;
-        ASTNodePtr declarator;
+        ASTNodePtr funcName;
 };
 
 class FunctionDefinition: public ASTNode{
@@ -89,22 +114,9 @@ class FunctionDefinition: public ASTNode{
         ASTNodePtr statements;
 };
 
-class Identifier: public ASTNode
-{
-public:
-    Identifier(std::string* in_str):str(in_str){
-        std::cout << "Identifier constructor of value: " << *str << std::endl;
-    }
-    void compile(std::ostream& os, int dstReg) const override {
-        os << ".globl "<<*str<<std::endl;
-        os << *str <<":"<< std::endl;
-    }
-private:
-    std::string *str;
-};
 
 
-class IntLiteral: public ASTNode
+class IntLiteral:public ASTNode
 {
 public:
     IntLiteral(int _num):num(_num){ // :num(_num) is a shorthand way of setting the private "num" to the value of "_num" passed into the function through the parser
@@ -119,30 +131,35 @@ private:
 
 };
 
-class IntType: public ASTNode
-{
+// class varDeclarator: public ASTNode{
+//     public:
+//         varDeclarator(ASTNodePtr _decl, ASTNodePtr _init):decl(_decl), init(_init) {
+//             std::cout << "varDeclarator called" << std::endl;
+//         }
+//         void compile(std::ostream& os, int dstReg) const override {
+//             // const Identifier* identifier = dynamic_cast<const Identifier*>(decl);
+//             // init->compile(os, dstReg);
+//             // std::string varID = identifier->getID();
+//         }
+//     private:
+//         Type* type;
+//         ASTNodePtr varName;
+//         ASTNodePtr decl;
+//         ASTNodePtr init;
+// };
+
+class CompoundStatement: public ASTNode {
 public:
-    IntType(){
-        std::cout << "IntType Specifier" << std::endl;
+    CompoundStatement(std::vector<ASTNodePtr> _stmts) : stmts(_stmts) {
+        std::cout << "CompoundStatement constructor" << std::endl;
     }
-    void compile(std::ostream& os, int dstReg) const override {
+
+    void compile(std::ostream &os, int dstReg) const override {
+        for (const auto &stmt : stmts) {
+            stmt->compile(os, dstReg);
+        }
     }
 private:
-    int num;
-
+    std::vector<ASTNodePtr> stmts;
 };
-
-class unsignedType: public ASTNode
-{
-public:
-    unsignedType(){
-        std::cout << "unsignedType Specifier" << std::endl;
-    }
-    void compile(std::ostream& os, int dstReg) const override {
-    }
-private:
-    u_int32_t num;
-
-};
-
 #endif

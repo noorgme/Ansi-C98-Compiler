@@ -391,7 +391,7 @@ Nonterminals, with rules where they appear
     function_definition <node> (90)
         on left: 6 7 8 9
         on right: 4
-    declaration_specifiers <node> (91)
+    declaration_specifiers <type_> (91)
         on left: 10 11 12 13 14 15
         on right: 6 7 11 13 15 89 90 157 158 159
     primary_expression <node> (92)
@@ -469,7 +469,7 @@ Nonterminals, with rules where they appear
     storage_class_specifier (116)
         on left: 95 96 97 98 99
         on right: 10 11
-    type_specifier <node> (117)
+    type_specifier <type_> (117)
         on left: 100 101 102 103 104 105 106 107 108 109 110 111
         on right: 12 13 120 121
     struct_or_union_specifier (118)

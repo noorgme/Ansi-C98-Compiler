@@ -17,6 +17,7 @@ void yyerror(const char *);
   const ASTNode *node;
   int number;
   std::string* string;
+  Type* type_;
 }
 
 %token INT_LITERAL
@@ -45,7 +46,7 @@ void yyerror(const char *);
 %type <node> expression constant_expression
 
 %type <node> declaration init_declarator
-%type <node> declaration_specifiers type_specifier
+%type <type_> declaration_specifiers type_specifier
 %type <node> struct_declaration
 %type <node> struct_declarator declarator
 %type <node> enum_specifier enumerator direct_declarator pointer
@@ -86,7 +87,7 @@ external_declaration
 
 function_definition
 	: declaration_specifiers declarator declaration_list compound_statement
-	| declaration_specifiers declarator compound_statement { $$ = new FunctionDefinition(FunctionDeclaration(new Type(Type::INT), $2), $3);}
+	| declaration_specifiers declarator compound_statement { $$ = new FunctionDefinition(FunctionDeclaration($1, std::move($2)), $3);}
 	| declarator declaration_list compound_statement
 	| declarator compound_statement
 	;
@@ -247,7 +248,7 @@ init_declarator_list
 	;
 
 init_declarator
-	: declarator
+	: declarator 
 	| declarator '=' initializer
 	;
 
@@ -263,12 +264,12 @@ type_specifier
 	: VOID
 	| CHAR
 	| SHORT
-	| INT {$$ = new IntType();}
+	| INT {$$ = new Type(Type::INT);}
 	| LONG
 	| FLOAT
 	| DOUBLE
 	| SIGNED
-	| UNSIGNED {$$ = new unsignedType();}
+	| UNSIGNED {$$ = new Type(Type::UNSIGNED_INT);}
 	| struct_or_union_specifier
 	| enum_specifier
 	| TYPE_NAME
@@ -339,7 +340,7 @@ declarator
 	;
 
 direct_declarator
-	: IDENTIFIER { $$ = new Identifier($1);}
+	: IDENTIFIER { $$ = new Identifier(*$1);}
 	| '(' declarator ')'
 	| direct_declarator '[' constant_expression ']'
 	| direct_declarator '[' ']'
