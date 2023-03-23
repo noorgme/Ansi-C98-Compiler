@@ -121,6 +121,9 @@ public:
     int getVal(Context& context) const{
         return context.getVariableValue(str);
     }
+    int getOffset(Context& context) const{
+        return context.getVariableOffset(str);
+    }
 private:
     std::string str;
 };
@@ -230,14 +233,18 @@ public:
         else if (returnvalidentifier != nullptr){
             int returnval = returnvalidentifier->getVal(context);
             std::cout<<"returning: "<<returnval<<std::endl;
+            int offset = returnvalidentifier->getOffset(context);
+            //load from memory into a5
             returnvalidentifier->compile(os, 10, context);
+            os<<"lw a5, "<<offset<<"(sp)"<<std::endl;
+
             
 
         }
         
         os << "mv a0, a5" << std::endl;
         //function epilogue
-        os<<"lw s0, 28(sp)"<<std::endl;
+        os<<"lw s0, 64(sp)"<<std::endl;
         os<<"addi sp, sp, 256"<<std::endl;
         os << "jr ra"<<std::endl;
         
