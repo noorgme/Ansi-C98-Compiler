@@ -424,7 +424,7 @@ initializer_list
 
 statement
 	: labeled_statement { $$ = $1; }
-	| compound_statement { $$ = $1; } /* */
+	| compound_statement { $$ = $1; }
 	| expression_statement {$$=$1;}
 	| selection_statement { $$ = $1; }
 	| iteration_statement { $$ = $1; }
@@ -451,7 +451,7 @@ declaration_list
 	;
 
 statement_list
-	: statement { $$ = makeList($1); } /*make a new statement class instance, add to some global vector (scope?). this vector will be passed up to compound statement as $2 */
+	: statement { std::cout << "Parser: statement " << std::endl; $$ = makeList($1); } /*make a new statement class instance, add to some global vector (scope?). this vector will be passed up to compound statement as $2 */
 	| statement_list statement {$$ = appendList($1, $2);}
 	;
 

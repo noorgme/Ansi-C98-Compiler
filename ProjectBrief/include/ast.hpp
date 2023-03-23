@@ -176,9 +176,9 @@ class FunctionDefinition: public ASTNode{
             if (noscoper != nullptr){
                 std::vector<NodeList*> listOfLists = noscoper->getScope();
                 std::cout<< "getScope called;"<<std::endl;
-                NodeList* listOfStatz =  listOfLists[0];
+                NodeList* listOfStatz =  listOfLists[1];
                 std::cout<< "statement list retrieved in funcdef, size: "<<(*listOfStatz).size()<<std::endl;
-                NodeList* listOfDeclz = listOfLists[1];
+                NodeList* listOfDeclz = listOfLists[0];
                 std::cout<< "decl list retrieved in funcdef;"<<(*listOfDeclz).size()<<std::endl;
                 for(int i = 0;i < (*listOfDeclz).size();i++){
                     (*listOfDeclz)[i]->compile(os, dstReg, context);
