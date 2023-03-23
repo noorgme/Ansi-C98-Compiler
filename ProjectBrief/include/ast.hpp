@@ -71,7 +71,7 @@ class makeScope : public ASTNode
 
 
 
-
+//RETURN
 
 
 class Return: public ASTNode
@@ -92,6 +92,9 @@ public:
 private:
      ASTNodePtr childnode;
 };
+
+
+//TYPES
 
 class Type: public ASTNode {
     public:
@@ -134,6 +137,11 @@ private:
     std::string str;
 };
 
+
+//DEFINITION & DECLARATION:
+
+
+
 class FunctionDeclaration: public ASTNode{
     public:
         FunctionDeclaration(Type* _returnType, ASTNodePtr _declarator):funcName(_declarator), returnType(_returnType){
@@ -148,7 +156,8 @@ class FunctionDeclaration: public ASTNode{
                 returnType->compile(os, dstReg, context);
                 }
             else{
-               std::cout<<"error: function name is null, expected identifier"<<std::endl;}
+               std::cout<<"error: function name is null, expected identifier"<<std::endl;
+               }
             //declarator->compile(os, dstReg);
             
         }
@@ -160,7 +169,7 @@ class FunctionDeclaration: public ASTNode{
 class FunctionDefinition: public ASTNode{
     public:
         FunctionDefinition(FunctionDeclaration _functdecl, ASTNodePtr _statements):functdecl(_functdecl), statements(_statements){
-            std::cout << "FunctionDefinition called" << std::endl;
+            std::cout << "FunctionDefinition constructed" << std::endl;
         }
         void compile(std::ostream& os, int dstReg, Context& context) const override{
             functdecl.compile(os, dstReg, context);
@@ -177,9 +186,9 @@ class FunctionDefinition: public ASTNode{
                 std::vector<NodeList*> listOfLists = noscoper->getScope();
                 std::cout<< "getScope called;"<<std::endl;
                 NodeList* listOfStatz =  listOfLists[1];
-                std::cout<< "statement list retrieved in funcdef, size: "<<(*listOfStatz).size()<<std::endl;
+                std::cout<< "statement list retrieved in funcdef, size: "<< (*listOfStatz).size() << std::endl;
                 NodeList* listOfDeclz = listOfLists[0];
-                std::cout<< "decl list retrieved in funcdef;"<<(*listOfDeclz).size()<<std::endl;
+                std::cout<< "decl list retrieved in funcdef, size: "<< (*listOfDeclz).size() << std::endl;
                 for(int i = 0;i < (*listOfDeclz).size();i++){
                     (*listOfDeclz)[i]->compile(os, dstReg, context);
                     std::cout<< "compiled decl: " << i<<std::endl;
@@ -195,6 +204,89 @@ class FunctionDefinition: public ASTNode{
         FunctionDeclaration functdecl;
         ASTNodePtr statements;
 };
+
+class initDeclarator: public ASTNode{
+
+    public:
+        initDeclarator(ASTNodePtr _declarator, ASTNodePtr _initialiser): declarator(_declarator), initialiser(_initialiser){
+            std::cout << "initDeclarator constructed" << std::endl;
+        }
+        void compile(std::ostream& os, int dstReg, Context& context) const override{
+            const Identifier* identifier = dynamic_cast<const Identifier*>(declarator);
+            if (identifier != nullptr){
+                std::string varName = identifier->getID(); //should define varName for the class so it can be used later
+                initialiser->compile(os, dstReg, context);
+                std::cout << "initDeclarator compiled for varName: " << varName << " = " << varValue << std::endl;
+                }
+            else{
+               std::cout<<"error: function name is null, expected identifier"<<std::endl;
+               }
+            if(initialiser == nullptr){
+                std::string varName = identifier->getID(); //messy but works
+            }
+            else{
+                
+            }
+        }
+        private:
+            int varValue = 0;
+            ASTNodePtr declarator;
+            ASTNodePtr initialiser = nullptr;  //_initialiser is = nullptr so that we can have no initialiser
+};
+
+
+class varDeclarator: public ASTNode{
+    public:
+        varDeclarator(Type* _returnType, initDeclarator* _init_decl): returnType(_returnType), init_decl(_init_decl){
+            std::cout << "varDeclarator constructed" << std::endl;
+        }
+        void compile(std::ostream& os, int dstReg, Context& context) const override{
+            init_decl->compile(os, dstReg, context);
+        }
+    private:
+        Type* returnType;
+        initDeclarator* init_decl;
+};
+
+// class varDeclaration: public ASTNode{
+//     public:
+//         varDeclaration(Type* _returnType, ASTNodePtr _decl, ASTNodePtr _expression): returnType(_returnType), decl(_decl), expression(_expression) {}
+        
+//         void compile(std::ostream& os, int dstReg, Context& context) const override {
+//             const Identifier* identifier = dynamic_cast<const Identifier*>(decl);
+
+//             if(identifier != nullptr){
+//                 std::string varName = identifier->getID();
+//                 context.newVar(varName);
+//                 int varOffset = context.getVariableOffset(varName);
+//                 expression->compile(os, dstReg, context);
+//                 os << "sw " << "a0, " << varOffset << "(sp)" << std::endl;
+//                 }
+//             else{std::cout << "error: expected identifier"<<std::endl;}
+//         }
+//     private:
+//         Type* returnType;
+//         ASTNodePtr decl;
+//         ASTNodePtr expression;
+// };
+
+class CompoundStatement: public ASTNode {
+public:
+    CompoundStatement(std::vector<ASTNodePtr> _stmts) : stmts(_stmts) {
+        std::cout << "CompoundStatement constructor" << std::endl;
+    }
+
+    void compile(std::ostream &os, int dstReg, Context& context) const override {
+        for (const auto &stmt : stmts) {
+            stmt->compile(os, dstReg, context);
+        }
+    }
+private:
+    std::vector<ASTNodePtr> stmts;
+};
+
+
+//PRIMITIVES:
 
 
 class IntLiteral:public ASTNode
@@ -212,42 +304,6 @@ private:
 
 };
 
-class varDeclaration: public ASTNode{
-    public:
-        varDeclaration(ASTNodePtr _decl, ASTNodePtr _expression) : decl(_decl), expression(_expression) {}
-        
-        void compile(std::ostream& os, int dstReg, Context& context) const override {
-            const Identifier* identifier = dynamic_cast<const Identifier*>(decl);
-
-            if(identifier != nullptr){
-                std::string varName = identifier->getID();
-                context.newVar(varName);
-                int varOffset = context.getVariableOffset(varName);
-                expression->compile(os, dstReg, context);
-                os << "sw " << "a0, " << varOffset << "(sp)" << std::endl;
-                }
-            else{std::cout << "error: expected identifier"<<std::endl;}
-        }
-    private:
-        //Type* type;
-        ASTNodePtr decl;
-        ASTNodePtr expression;
-};
-
-class CompoundStatement: public ASTNode {
-public:
-    CompoundStatement(std::vector<ASTNodePtr> _stmts) : stmts(_stmts) {
-        std::cout << "CompoundStatement constructor" << std::endl;
-    }
-
-    void compile(std::ostream &os, int dstReg, Context& context) const override {
-        for (const auto &stmt : stmts) {
-            stmt->compile(os, dstReg, context);
-        }
-    }
-private:
-    std::vector<ASTNodePtr> stmts;
-};
 
 
 

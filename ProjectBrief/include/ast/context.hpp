@@ -11,22 +11,30 @@ typedef std::unordered_map<std::string, int> varMap;
 
 class Context {
     public:
-        Context():vars(){
+        Context():varOffset(){
             std::cout << "Context Called" << std::endl;
         }
         ~Context(){
 
         }
         void newVar(const std::string& name) {
-            vars[name] = currOffset;
+            varOffset[name] = currOffset;
             currOffset -= 4;
 
         }
-        int getVariableOffset(const std::string& name) {
-            return vars[name];
+        int getVariableOffset(const std::string& name){
+            return varOffset[name];
         }
+        void addVariableValue(const std::string& name, int varVal){
+            varValues[name] = varVal;
+        }
+        int getVariableValue(const std::string& name){
+            return varValues[name];
+        }
+
     private:
-        varMap vars;
+        varMap varOffset;
+        varMap varValues;
         int currOffset = -64;
 };
 #endif

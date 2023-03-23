@@ -21,6 +21,7 @@ void yyerror(const char *);
   Type* type_;
   makeScope* scoper;
   NodeList* listptr;
+  initDeclarator* initDecl;
 }
 
 %token INT_LITERAL
@@ -48,8 +49,9 @@ void yyerror(const char *);
 %type <node> logical_or_expression conditional_expression assignment_expression
 %type <node> expression constant_expression
 
-%type <node> declaration init_declarator
+%type <node> declaration 
 %type <type_> declaration_specifiers type_specifier
+%type <initDecl> init_declarator init_declarator_list
 %type <node> struct_declaration
 %type <node> struct_declarator declarator
 %type <node> enum_specifier enumerator direct_declarator pointer
@@ -244,17 +246,17 @@ constant_expression
 
 declaration
 	: declaration_specifiers ';' 
-	| declaration_specifiers init_declarator_list ';'
+	| declaration_specifiers init_declarator_list ';' {$$ = new varDeclarator($1, $2);}
 	;
 
 init_declarator_list
-	: init_declarator
-	| init_declarator_list ',' init_declarator
+	: init_declarator {$$ = $1;}
+	| init_declarator_list ',' init_declarator {$$ = $1;}
 	;
 
 init_declarator
 	: declarator /* "int x;" on its own */
-	| declarator '=' initializer {$$ = new varDeclaration($1, $3);}
+	| declarator '=' initializer {$$ = new initDeclarator($1, $3);}
 	;
 
 storage_class_specifier
@@ -446,12 +448,12 @@ compound_statement
 
 
 declaration_list
-	: declaration {std::cout << "Parser: declarator" << std::endl; $$ = makeList($1); }
+	: declaration {$$ = makeList($1); }
 	| declaration_list declaration {std::cout << "Parser: decl_list decl" << std::endl;$$ = appendList($1, $2);}
 	;
 
 statement_list
-	: statement { std::cout << "Parser: statement " << std::endl; $$ = makeList($1); } /*make a new statement class instance, add to some global vector (scope?). this vector will be passed up to compound statement as $2 */
+	: statement {$$ = makeList($1); } /*make a new statement class instance, add to some global vector (scope?). this vector will be passed up to compound statement as $2 */
 	| statement_list statement {$$ = appendList($1, $2);}
 	;
 
