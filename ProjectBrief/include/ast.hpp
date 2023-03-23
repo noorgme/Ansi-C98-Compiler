@@ -83,6 +83,9 @@ public:
     void compile(std::ostream& os, int dstReg, Context& context) const override {
         childnode->compile(os, 10, context);
         os << "mv a0, a5" << std::endl;
+        //function epilogue
+        os<<"lw s0, 28(sp)"<<std::endl;
+        os<<"addi sp, sp, 256"<<std::endl;
         os << "jr ra"<<std::endl;
         
     }
@@ -162,6 +165,12 @@ class FunctionDefinition: public ASTNode{
         void compile(std::ostream& os, int dstReg, Context& context) const override{
             functdecl.compile(os, dstReg, context);
             std::cout<< "compiled funcdecl"<<std::endl;
+
+
+            //Function prologue:
+            os<<"addi sp, sp, -256"<<std::endl;
+            os<<"sw s0, 28(sp)"<<std::endl;
+            os<<"addi s0, sp, 256"<<std::endl;
             const makeScope* noscoper = dynamic_cast<const makeScope*>(statements);
             std::cout << "makescope cast"<<std::endl;
             if (noscoper != nullptr){
