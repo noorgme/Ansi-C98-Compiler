@@ -74,24 +74,6 @@ class makeScope : public ASTNode
 //RETURN
 
 
-class Return: public ASTNode
-{
-public:
-    Return(ASTNodePtr expr):childnode(expr){
-        std::cout << "Return Called" << std::endl;
-    }
-    void compile(std::ostream& os, int dstReg, Context& context) const override {
-        childnode->compile(os, 10, context);
-        os << "mv a0, a5" << std::endl;
-        //function epilogue
-        os<<"lw s0, 28(sp)"<<std::endl;
-        os<<"addi sp, sp, 256"<<std::endl;
-        os << "jr ra"<<std::endl;
-        
-    }
-private:
-     ASTNodePtr childnode;
-};
 
 
 //TYPES
@@ -128,10 +110,16 @@ public:
         std::cout << "Identifier constructor of value: " << str << std::endl;
     }
     void compile(std::ostream& os, int dstReg, Context& context) const override {
+        std::cout<<"Identifier compile called"<<std::endl;
+        int varOffset = context.getVariableOffset(str);
+        os<<"sw a5, "<<varOffset<<"(sp)"<<std::endl;
     }
     std::string getID() const{
         std::cout << "getID Called" << std::endl;
         return str;
+    }
+    int getVal(Context& context) const{
+        return context.getVariableValue(str);
     }
 private:
     std::string str;
@@ -226,6 +214,38 @@ private:
 
 };
 
+class Return: public ASTNode
+{
+public:
+    Return(ASTNodePtr expr):childnode(expr){
+        std::cout << "Return Called" << std::endl;
+    }
+    void compile(std::ostream& os, int dstReg, Context& context) const override {
+        const IntLiteral* returnvalliteral = dynamic_cast<const IntLiteral*>(childnode);
+        const Identifier* returnvalidentifier = dynamic_cast<const Identifier*>(childnode);
+        if (returnvalliteral != nullptr){
+            returnvalliteral->compile(os, 10, context);
+            std::cout<<"returning "<<returnvalliteral->getintval()<<std::endl;
+        }
+        else if (returnvalidentifier != nullptr){
+            int returnval = returnvalidentifier->getVal(context);
+            std::cout<<"returning: "<<returnval<<std::endl;
+            returnvalidentifier->compile(os, 10, context);
+            
+
+        }
+        
+        os << "mv a0, a5" << std::endl;
+        //function epilogue
+        os<<"lw s0, 28(sp)"<<std::endl;
+        os<<"addi sp, sp, 256"<<std::endl;
+        os << "jr ra"<<std::endl;
+        
+    }
+private:
+     ASTNodePtr childnode;
+};
+
 
 class initDeclarator: public ASTNode{
 
@@ -242,6 +262,11 @@ class initDeclarator: public ASTNode{
             }
             if (identifier != nullptr){
                 std::string varName = identifier->getID(); //should define varName for the class so it can be used later
+                //add to context
+                context.newVar(varName);
+                context.addVariableValue(varName, varValue);
+                //get new offset
+                int varOffset = context.getVariableOffset(varName);
                 initialiser->compile(os, dstReg, context);
                 std::cout << "initDeclarator compiled for varName: " << varName << " = " << varValue << std::endl;
                 }
