@@ -190,10 +190,12 @@ class FunctionDefinition: public ASTNode{
                 NodeList* listOfDeclz = listOfLists[0];
                 std::cout<< "decl list retrieved in funcdef, size: "<< (*listOfDeclz).size() << std::endl;
                 for(int i = 0;i < (*listOfDeclz).size();i++){
+                    std::cout<<"compiling decl: "<<i<<std::endl;
                     (*listOfDeclz)[i]->compile(os, dstReg, context);
                     std::cout<< "compiled decl: " << i<<std::endl;
                 }
                 for(int i = 0;i < (*listOfStatz).size();i++){
+                    std::cout<<"compiling smnt: "<<i<<std::endl;
                     (*listOfStatz)[i]->compile(os, dstReg, context);
                 }
             }
@@ -205,6 +207,26 @@ class FunctionDefinition: public ASTNode{
         ASTNodePtr statements;
 };
 
+class IntLiteral:public ASTNode
+{
+public:
+    IntLiteral(int _num):num(_num){ // :num(_num) is a shorthand way of setting the private "num" to the value of "_num" passed into the function through the parser
+        std::cout << "IntLiteral constructor of value: " << num << std::endl;
+    }
+    void compile(std::ostream& os, int dstReg, Context& context) const override {
+        std::cout<<"IntLiteral compile called"<<std::endl;
+        os << "li a5, "<< num << std::endl;
+    }
+    int getintval() const {
+        return num;
+    }
+private:
+    ASTNodePtr expression;
+    int num;
+
+};
+
+
 class initDeclarator: public ASTNode{
 
     public:
@@ -212,7 +234,12 @@ class initDeclarator: public ASTNode{
             std::cout << "initDeclarator constructed" << std::endl;
         }
         void compile(std::ostream& os, int dstReg, Context& context) const override{
+            std::cout<<"initDeclarator compile called"<<std::endl;
             const Identifier* identifier = dynamic_cast<const Identifier*>(declarator);
+            const IntLiteral* initval = dynamic_cast<const IntLiteral*>(initialiser);
+            if (initval != nullptr){
+                varValue = initval->getintval();
+            }
             if (identifier != nullptr){
                 std::string varName = identifier->getID(); //should define varName for the class so it can be used later
                 initialiser->compile(os, dstReg, context);
@@ -229,7 +256,7 @@ class initDeclarator: public ASTNode{
             }
         }
         private:
-            int varValue = 0;
+            mutable int varValue = 0;
             ASTNodePtr declarator;
             ASTNodePtr initialiser = nullptr;  //_initialiser is = nullptr so that we can have no initialiser
 };
@@ -289,20 +316,6 @@ private:
 //PRIMITIVES:
 
 
-class IntLiteral:public ASTNode
-{
-public:
-    IntLiteral(int _num):num(_num){ // :num(_num) is a shorthand way of setting the private "num" to the value of "_num" passed into the function through the parser
-        std::cout << "IntLiteral constructor of value: " << num << std::endl;
-    }
-    void compile(std::ostream& os, int dstReg, Context& context) const override {
-        os << "li a5, "<< num << std::endl;
-    }
-private:
-    ASTNodePtr expression;
-    int num;
-
-};
 
 
 

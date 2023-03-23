@@ -414,13 +414,13 @@ direct_abstract_declarator
 	;
 
 initializer
-	: assignment_expression
+	: assignment_expression {$$=$1;}
 	| '{' initializer_list '}'
 	| '{' initializer_list ',' '}'
 	;
 
 initializer_list
-	: initializer
+	: initializer {$$=$1;}
 	| initializer_list ',' initializer
 	;
 
