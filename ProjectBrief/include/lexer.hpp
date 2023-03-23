@@ -1,5 +1,6 @@
 #ifndef lexer_hpp
 #define lexer_hpp
+#include "ast.hpp"
 
 #include <string>
 

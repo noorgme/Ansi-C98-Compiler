@@ -550,13 +550,13 @@ Nonterminals, with rules where they appear
     labeled_statement <node> (143)
         on left: 187 188 189
         on right: 181
-    compound_statement <node> (144)
+    compound_statement <scoper> (144)
         on left: 190 191 192 193
         on right: 6 7 8 9 182
-    declaration_list <node> (145)
+    declaration_list <listptr> (145)
         on left: 194 195
         on right: 6 8 192 193 195
-    statement_list <node> (146)
+    statement_list <listptr> (146)
         on left: 196 197
         on right: 191 193 197
     expression_statement <node> (147)

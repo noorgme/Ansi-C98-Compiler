@@ -18,6 +18,8 @@ void yyerror(const char *);
   int number;
   std::string* string;
   Type* type_;
+  makeScope* scoper;
+  NodeListPtr listptr;
 }
 
 %token INT_LITERAL
@@ -52,20 +54,23 @@ void yyerror(const char *);
 %type <node> enum_specifier enumerator direct_declarator pointer
 
 %type <node> parameter_declaration type_name abstract_declarator direct_abstract_declarator
-%type <node> initializer statement labeled_statement compound_statement
+%type <node> initializer statement labeled_statement 
+
 %type <node> expression_statement selection_statement iteration_statement
 %type <node> jump_statement external_declaration function_definition
 
 %type <node> struct_declaration_list argument_expression_list
 %type <node> specifier_qualifier_list struct_declarator_list
 %type <node> enumerator_list parameter_list
-%type <node> identifier_list initializer_list declaration_list statement_list
+%type <node> identifier_list initializer_list
+%type <listptr> declaration_list statement_list
 
 %type <number> INT_LITERAL
 
 %type <string> IDENTIFIER
 
 %type <node> CASE DEFAULT IF ELSE SWITCH WHILE DO FOR GOTO CONTINUE BREAK RETURN
+%type <scoper> compound_statement
 
 
 %start ROOT
@@ -102,7 +107,7 @@ declaration_specifiers
 	;
 
 primary_expression
-	: IDENTIFIER
+	: IDENTIFIER {$$ = new Identifier(*$1);}
 	| INT_LITERAL {$$ = new IntLiteral($1);}
 	| STRING_LITERAL
 	| '(' expression ')'
@@ -238,7 +243,7 @@ constant_expression
 	;
 
 declaration
-	: declaration_specifiers ';'
+	: declaration_specifiers ';' 
 	| declaration_specifiers init_declarator_list ';'
 	;
 
@@ -248,8 +253,8 @@ init_declarator_list
 	;
 
 init_declarator
-	: declarator 
-	| declarator '=' initializer
+	: declarator /* "int x;" on its own */
+	| declarator '=' initializer {$$ = new varDeclaration($1, $3);}
 	;
 
 storage_class_specifier
@@ -418,11 +423,11 @@ initializer_list
 	;
 
 statement
-	: labeled_statement
-	| compound_statement { $$ = $1; }
-	| expression_statement
-	| selection_statement
-	| iteration_statement
+	: labeled_statement { $$ = $1; }
+	| compound_statement { $$ = $1; } /* */
+	| expression_statement {$$=$1;}
+	| selection_statement { $$ = $1; }
+	| iteration_statement { $$ = $1; }
 	| jump_statement {$$ = $1;}
 	;
 
@@ -434,19 +439,20 @@ labeled_statement
 
 compound_statement
 	: '{' '}'
-	| '{' statement_list '}' { $$ = $2; } /* Add scope support later */
-	| '{' declaration_list '}'
-	| '{' declaration_list statement_list '}'
+	| '{' statement_list '}' {} /* Add scope support later */
+	| '{' declaration_list '}'{}
+	| '{' declaration_list statement_list '}' {$$ = new makeScope($2, $3); delete $2; delete $3;}/*join together the decl lists and stat lists, this is then passed up to function def which should call compile on each item
+	should return same vector type as the other two list forms above, after passed up, scope should be deleted as no longer needed (just delete $1 and $2?)*/
 	;
 
 declaration_list
-	: declaration
-	| declaration_list declaration
+	: declaration {std::cout << "Parser: declarator" << std::endl; $$ = makeList($1); }
+	| declaration_list declaration {std::cout << "Parser: decl_list decl" << std::endl;$$ = appendList($1, $2);}
 	;
 
 statement_list
-	: statement { $$ = $1; } /* Assume only 1 statement always */
-	| statement_list statement /* Implement later */
+	: statement { $$ = makeList($1); } /*make a new statement class instance, add to some global vector (scope?). this vector will be passed up to compound statement as $2 */
+	| statement_list statement {$$ = appendList($1, $2);}
 	;
 
 expression_statement

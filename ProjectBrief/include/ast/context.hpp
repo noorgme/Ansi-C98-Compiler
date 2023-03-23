@@ -6,13 +6,12 @@
 #include <iostream>
 #include <unordered_map>
 
-
 typedef std::unordered_map<std::string, int> varMap;
 
 class Context {
     public:
         Context():vars(){
-
+            std::cout << "Context Called" << std::endl;
         }
         ~Context(){
 
@@ -29,5 +28,4 @@ class Context {
         varMap vars;
         int currOffset = -64;
 };
-
 #endif

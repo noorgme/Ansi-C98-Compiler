@@ -1,4 +1,5 @@
 #include "ast.hpp"
+#include "ast/context.hpp"
 #include "cli.h"
 #include <fstream>
 #include <iostream>
@@ -7,9 +8,9 @@
 
 void compile(std::ostream &w)
 {
-
+    Context context;
     const ASTNode *prog = parseAST();
-    prog->compile(w, 10);
+    prog->compile(w, 10, context);
 
     // w << ".globl f" << std::endl;
     // w << std::endl;
