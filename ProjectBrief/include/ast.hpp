@@ -24,33 +24,25 @@ public:
 };
 
 typedef const ASTNode *ASTNodePtr;
+typedef std::vector<ASTNodePtr> NodeList;
+
+
+extern NodeList* makeList(ASTNode* node);
+extern NodeList* appendList(NodeList* list, ASTNode* node);
+
+
 
 extern const ASTNode *parseAST();
 
 
 //SCOPE:
 
-typedef std::vector<ASTNodePtr> NodeList;
-typedef NodeList *NodeListPtr;
 
-
-inline NodeListPtr makeList(ASTNodePtr nodez){
-    std::cout << "NodeListPtr Called" << std::endl;
-    NodeListPtr myList = new NodeList();
-    myList->push_back(nodez);
-    return myList;
-}
-
-inline NodeListPtr appendList(NodeListPtr nodezlist, ASTNodePtr nodez){
-    std::cout << "inline NodeListPtr Called" << std::endl;
-    nodezlist->push_back(nodez);
-    return nodezlist;
-}
 
 class makeScope : public ASTNode
 {
     public:
-        makeScope(NodeListPtr _declz, NodeListPtr _statz): declz(_declz), statz(_statz){
+        makeScope(NodeList* _declz, NodeList* _statz): declz(_declz), statz(_statz){
             std::cout << "makeScope Called" << std::endl;
             Scope.push_back(declz);
             Scope.push_back(statz);
@@ -63,7 +55,7 @@ class makeScope : public ASTNode
         void compile(std::ostream& os, int dstReg, Context& context) const override{
             
         }
-        const std::vector<NodeListPtr>& getScope() const{
+        const std::vector<NodeList*>& getScope() const{
             if (Scope.empty()){
                 std::cout<<"Error in 'getScope()' scope empty"<<std::endl;
                 return Scope;}
@@ -72,9 +64,9 @@ class makeScope : public ASTNode
             }
         }
     private:    
-        std::vector<NodeListPtr> Scope;
-        NodeListPtr declz;
-        NodeListPtr statz;
+        std::vector<NodeList*> Scope;
+        NodeList* declz;
+        NodeList* statz;
 };
 
 
@@ -171,16 +163,21 @@ class FunctionDefinition: public ASTNode{
             functdecl.compile(os, dstReg, context);
             std::cout<< "compiled funcdecl"<<std::endl;
             const makeScope* noscoper = dynamic_cast<const makeScope*>(statements);
+            std::cout << "makescope cast"<<std::endl;
             if (noscoper != nullptr){
-            std::vector<NodeListPtr> listOfLists = noscoper->getScope();
-            NodeListPtr listOfStatz =  listOfLists[0];
-            NodeListPtr listOfDeclz = listOfLists[1];
-            for(int i = 0;i < (*listOfDeclz).size();i++){
-                (*listOfDeclz)[i]->compile(os, dstReg, context);
-            }
-            for(int i = 0;i < (*listOfStatz).size();i++){
-                (*listOfStatz)[i]->compile(os, dstReg, context);
-            }
+                std::vector<NodeList*> listOfLists = noscoper->getScope();
+                std::cout<< "getScope called;"<<std::endl;
+                NodeList* listOfStatz =  listOfLists[0];
+                std::cout<< "statement list retrieved in funcdef, size: "<<(*listOfStatz).size()<<std::endl;
+                NodeList* listOfDeclz = listOfLists[1];
+                std::cout<< "decl list retrieved in funcdef;"<<(*listOfDeclz).size()<<std::endl;
+                for(int i = 0;i < (*listOfDeclz).size();i++){
+                    (*listOfDeclz)[i]->compile(os, dstReg, context);
+                    std::cout<< "compiled decl: " << i<<std::endl;
+                }
+                for(int i = 0;i < (*listOfStatz).size();i++){
+                    (*listOfStatz)[i]->compile(os, dstReg, context);
+                }
             }
             else{std::cout<<"couldn't cast scope"<<std::endl;}
             // statements->compile(os, dstReg, context);

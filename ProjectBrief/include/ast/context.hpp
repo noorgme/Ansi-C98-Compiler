@@ -5,6 +5,7 @@
 #include <fstream>
 #include <iostream>
 #include <unordered_map>
+#include "../ast.hpp"
 
 typedef std::unordered_map<std::string, int> varMap;
 

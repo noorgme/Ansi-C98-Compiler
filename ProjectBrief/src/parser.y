@@ -10,16 +10,17 @@ extern FILE *yyin;
 
 int yylex(void);
 void yyerror(const char *);
+
 }
 
 
 %union {
-  const ASTNode *node;
+  ASTNode *node;
   int number;
   std::string* string;
   Type* type_;
   makeScope* scoper;
-  NodeListPtr listptr;
+  NodeList* listptr;
 }
 
 %token INT_LITERAL
@@ -71,7 +72,6 @@ void yyerror(const char *);
 
 %type <node> CASE DEFAULT IF ELSE SWITCH WHILE DO FOR GOTO CONTINUE BREAK RETURN
 %type <scoper> compound_statement
-
 
 %start ROOT
 
@@ -438,12 +438,12 @@ labeled_statement
 	;
 
 compound_statement
-	: '{' '}'
-	| '{' statement_list '}' {} /* Add scope support later */
-	| '{' declaration_list '}'{}
-	| '{' declaration_list statement_list '}' {$$ = new makeScope($2, $3); delete $2; delete $3;}/*join together the decl lists and stat lists, this is then passed up to function def which should call compile on each item
-	should return same vector type as the other two list forms above, after passed up, scope should be deleted as no longer needed (just delete $1 and $2?)*/
+	: '{' '}' { $$ = new makeScope(new NodeList(), new NodeList()); }
+	| '{' statement_list '}' { $$ = new makeScope(new NodeList(), $2); }
+	| '{' declaration_list '}' { $$ = new makeScope($2, new NodeList()); }
+	| '{' declaration_list statement_list '}' { $$ = new makeScope($2, $3); }
 	;
+
 
 declaration_list
 	: declaration {std::cout << "Parser: declarator" << std::endl; $$ = makeList($1); }
