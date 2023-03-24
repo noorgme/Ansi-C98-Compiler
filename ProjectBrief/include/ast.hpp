@@ -320,17 +320,27 @@ class BinaryOperator: public ASTNode{
                 std::cout<<"BinaryOperator(left) is Identifier" <<std::endl;
                 //std::cout << "BinaryOperator(left) has value: " << context.getVariableValue(leftValIdent->getID()) << std::endl;
                 type = leftValIdent->getVarType(context);
+                //get reg
+                std::string reg;
+                if (context.checkUsedReg("a4")){
+                    reg = "a5";
+                    context.addUsedReg("a5");
+                }
+                else{
+                    reg = "a4"; 
+                    context.addUsedReg("a4");
+                }
                 if (type == 5){
                     //DOUBLE
-                    os<<"fld fa4, "<<leftValIdent->getOffset(context)<<"(s0)"<<std::endl;
+                    os<<"fld f"<<reg<<", "<<leftValIdent->getOffset(context)<<"(s0)"<<std::endl;
                 }
                 else if (type == 3 ){
                     //FLOAT
-                    os<<"flw fa4, "<<leftValIdent->getOffset(context)<<"(s0)"<<std::endl;
+                    os<<"flw f"<<reg<<", "<<leftValIdent->getOffset(context)<<"(s0)"<<std::endl;
                 }
                 else if (type == 1){
                     //INT
-                os<<"lw a4, "<<leftValIdent->getOffset(context)<<"(s0)"<<std::endl;
+                    os<<"lw "<<reg<<", "<<leftValIdent->getOffset(context)<<"(s0)"<<std::endl;
                 }
                 //os << "mv t0, a4" << std::endl;
             }
@@ -354,19 +364,37 @@ class BinaryOperator: public ASTNode{
                 //std::cout << "BinaryOperator(right) has value: " << context.getVariableValue(rightValIdent->getID())<< std::endl;
                 type = leftValIdent->getVarType(context);
 
+                std::string reg2;
+                if (context.checkUsedReg("a4")){
+                    if(context.checkUsedReg("a5")){
+                        reg2 = "a6";
+                        context.addUsedReg("a6");
+                    }
+                
+                    else{
+                        reg2 = "a5";
+                        context.addUsedReg("a5");
+                    }
+                }
+                else{
+                    reg2 = "a4";
+                    context.addUsedReg("a4");
+                    }
+
+
                 
 
                 if (type == 5){
                     //DOUBLE
-                    os<<"fld fa5, "<<rightValIdent->getOffset(context)<<"(s0)"<<std::endl;
+                    os<<"fld f"<<reg2<<", "<<rightValIdent->getOffset(context)<<"(s0)"<<std::endl;
                 }
                 else if (type ==3 ){
                     //FLOAT
-                    os<<"flw fa5, "<<rightValIdent->getOffset(context)<<"(s0)"<<std::endl;
+                    os<<"flw f"<<reg2<<", "<<rightValIdent->getOffset(context)<<"(s0)"<<std::endl;
                 }
                 else if (type == 1){
                 //INT
-                os<<"lw a5, "<<rightValIdent->getOffset(context)<<"(s0)"<<std::endl;
+                os<<"lw "<<reg2<<", "<<rightValIdent->getOffset(context)<<"(s0)"<<std::endl;
                 }
                 //os << "mv t1, a5" << std::endl;
             }
@@ -452,6 +480,7 @@ class BinaryOperator: public ASTNode{
                 break;
             }
         }
+        
 
         int giveType() const{
             return type;
@@ -461,6 +490,7 @@ class BinaryOperator: public ASTNode{
         OperatorType opType;
         ASTNodePtr left;
         ASTNodePtr right;
+
 };
 
 
@@ -775,9 +805,9 @@ class Assign: public ASTNode{
             if(leftIdent != nullptr){//left should always be identifier
                 leftIdent->compile(os, dstReg, context); 
                 std::string reg;
-                if (context.checkUsedReg("a4")){reg = "a5";}
+                if (context.checkUsedReg("a4")){reg = "a5";context.addUsedReg("a5");}
                 else{reg = "a4"; context.addUsedReg("a4");}
-                os << "lw "<< reg << ", "<< leftIdent->getOffset(context) << "(s0) should be a5?" << std::endl;
+                os << "lw "<< reg << ", "<< leftIdent->getOffset(context) << "(s0)" << std::endl; //messing up for logica_or test
             }
             const IntLiteral* rightVal = dynamic_cast<const IntLiteral*>(right);
             const BinaryOperator* rightValBinary = dynamic_cast<const BinaryOperator*>(right);
@@ -799,7 +829,6 @@ class Assign: public ASTNode{
                     os << "sw a5, "<< leftIdent->getOffset(context) << "(s0)" <<std::endl;
                     break;
                 case '*':
-                    //godbolt expects "lw a4, offset (s0)" to be the previous instruction
                     //TODO: assembly output changes based on the value of RHS
                     os << "mv a4, a5 "<< std::endl;
                     os << "slii a5, a5, 2" << std::endl;
