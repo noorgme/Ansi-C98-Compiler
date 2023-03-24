@@ -73,7 +73,7 @@ void yyerror(const char *);
 %type <node> identifier_list initializer_list
 %type <listptr> declaration_list statement_list
 
-%type <c> MUL_ASSIGN DIV_ASSIGN MOD_ASSIGN ADD_ASSIGN SUB_ASSIGN LEFT_ASSIGN RIGHT_ASSIGN AND_ASSIGN assignment_operator LE_OP
+%type <c> MUL_ASSIGN DIV_ASSIGN MOD_ASSIGN ADD_ASSIGN SUB_ASSIGN LEFT_ASSIGN RIGHT_ASSIGN AND_ASSIGN assignment_operator
 
 %type <number> INT_LITERAL HEX_LITERAL
 %type <floatlit> FLOAT_LITERAL
@@ -188,7 +188,7 @@ relational_expression
 	: shift_expression { $$ = $1; }
 	| relational_expression '<' shift_expression {$$ = new BinaryOperator(BinaryOperator::LESS_THAN, $1, $3); }
 	| relational_expression '>' shift_expression {$$ = new BinaryOperator(BinaryOperator::GREATER_THAN, $1, $3); }
-	| relational_expression LE_OP shift_expression {$$ = new BinaryOperator(BinaryOperator::LESS_EQ, $1, $3); }
+	| relational_expression LE_OP shift_expression {std::cout << "!!!!!!" << std::endl; $$ = new BinaryOperator(BinaryOperator::LESS_EQ, $1, $3); }
 	| relational_expression GE_OP shift_expression {$$ = new BinaryOperator(BinaryOperator::GREATER_EQ, $1, $3); }
 	;
 
@@ -245,7 +245,6 @@ assignment_operator
 	| AND_ASSIGN  {$$ = '&';}
 	| XOR_ASSIGN  {$$ = 'x';}
 	| OR_ASSIGN  {$$ = '|';}
-	| LE_OP {$$ = 'l';}  	//!!!!!!	//is this supposed to be here? implmented in binary op?
 	;
 
 expression
