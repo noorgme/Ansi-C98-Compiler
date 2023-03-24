@@ -23,13 +23,13 @@ public:
 
 };
 
+
+
 typedef const ASTNode *ASTNodePtr;
 typedef std::vector<ASTNodePtr> NodeList;
 
-
 extern NodeList* makeList(ASTNode* node);
 extern NodeList* appendList(NodeList* list, ASTNode* node);
-
 
 
 extern const ASTNode *parseAST();
@@ -85,11 +85,13 @@ class Type: public ASTNode {
             UNSIGNED_INT,
             FLOAT,
             DOUBLE,
-            VOID
+            VOID,
+            CHAR
         };
     Type(TypeSpecifier _typeSpecifier): typeSpecifier(_typeSpecifier){}
 
     void compile(std::ostream& os, int dstReg, Context& context) const override{
+        std::cout<<"Type class compile called"<<std::endl;
         switch (typeSpecifier){
             case INT:
                 std::cout << "INT typeSpecifier Called" << std::endl;
@@ -97,7 +99,14 @@ class Type: public ASTNode {
             case UNSIGNED_INT:
                 std::cout << "UNISGNED_INT typeSpecifier Called" << std::endl;
                 break;
+            case CHAR:
+                std::cout<<"CHAR typespec called"<<std::endl;
+                break;
         }
+    }
+
+    TypeSpecifier getType() const{
+        return typeSpecifier;
     }
     private:
         TypeSpecifier typeSpecifier;
@@ -112,7 +121,22 @@ public:
     void compile(std::ostream& os, int dstReg, Context& context) const override {
         std::cout<<"Identifier compile called"<<std::endl;
         int varOffset = context.getVariableOffset(str);
-        os<<"sw a5, "<<varOffset<<"(sp)"<<std::endl;
+        std::string reg;
+        if (context.checkUsedReg("a0")){
+            if (context.checkUsedReg("a1")){
+                reg = "a2";
+                context.addUsedReg("a2");
+            }
+            else{
+                reg = "a1";
+                context.addUsedReg("a1");
+            }
+        }
+        else{
+            reg = "a0";
+            context.addUsedReg("a0");
+        }
+        os<<"sw "<<reg<<", "<<varOffset<<"(s0)"<<std::endl;
     }
     std::string getID() const{
         std::cout << "getID Called" << std::endl;
@@ -124,6 +148,11 @@ public:
     int getOffset(Context& context) const{
         return context.getVariableOffset(str);
     }
+
+    int getVarType(Context& context) const{
+        return context.getVarType(str);
+    }
+    
 private:
     std::string str;
 };
@@ -133,21 +162,433 @@ private:
 
 
 
-class FunctionDeclaration: public ASTNode{
+
+class IntLiteral:public ASTNode
+{
+public:
+    IntLiteral(int _num):num(_num){ // :num(_num) is a shorthand way of setting the private "num" to the value of "_num" passed into the function through the parser
+        std::cout << "IntLiteral constructor of value: " << num << std::endl;
+    }
+    void compile(std::ostream& os, int dstReg, Context& context) const override {
+        std::cout<<"IntLiteral compile called"<<std::endl;
+        os << "li a5, "<< num << std::endl;
+    }
+    int getintval() const {
+        return num;
+    }
+private:
+    ASTNodePtr expression;
+    int num;
+
+};
+
+class SizeOf : public ASTNode {
+
     public:
-        FunctionDeclaration(Type* _returnType, ASTNodePtr _declarator):funcName(_declarator), returnType(_returnType){
+        SizeOf(ASTNodePtr _expr): expr(_expr){
+        std::cout<<"SizeOf Constructed"<<std::endl;
+    };
+    void compile(std::ostream &os, int dstreg, Context& context) const override{
+        //check if identifier
+        std::cout<<"SizeOf compile called"<<std::endl;
+        const IntLiteral* intliteral = dynamic_cast<const IntLiteral*>(expr);
+        std::cout<<"flag 5"<<std::endl;
+        const Identifier* identifier = dynamic_cast<const Identifier*>(expr);
+        const Type* typer = dynamic_cast<const Type*>(expr);
+        
+        
+        std::cout<<"flag 6"<<std::endl;
+        if (identifier != nullptr){
+            int type = identifier->getVarType(context);
+            if (type == 1){
+                size = 4;
+            }
+            else if (type == 2){
+                size = 1;
+            }
+            
+        }
+        else if (intliteral != nullptr){
+            size = 4;
+        }
+        else if (typer != nullptr){
+            if (typer->getType() == Type::CHAR){
+                size = 1;
+            }
+            else if (typer->getType() == Type::INT){
+                size = 4;
+            }
+        }
+    }
+    int getSize() const{
+        return size;
+    };
+        
+    private:
+        ASTNodePtr expr;
+        mutable int size;
+};
+
+class BinaryOperator: public ASTNode{
+    public:
+        enum OperatorType{
+            ADD,
+            SUBTRACT,
+            MULTIPLY,
+            DIVIDE,
+            MODULO,
+            LEFT_SHIFT,
+            RIGHT_SHIFT,
+            LESS_THAN,
+            GREATER_THAN,
+            LESS_EQ,
+            GREATER_EQ,
+            EQUAL,
+            NEQUAL,
+            AND,
+            XOR,
+            OR,
+            LOGICAL_AND,
+            LOGICAL_OR
+        };
+
+        BinaryOperator(OperatorType _opType, ASTNodePtr _left, ASTNodePtr _right):left(_left), right(_right), opType(_opType){
+
+        }
+
+        
+        void compile(std::ostream &os, int dstReg, Context& context) const override {
+            std::cout << "BinaryOperator compile called" << std::endl;
+
+            //check if left is an intliteral or a Identifier
+            const IntLiteral* leftValInt = dynamic_cast<const IntLiteral*>(left);
+            const Identifier* leftValIdent = dynamic_cast<const Identifier*>(left);
+            if(leftValInt != nullptr){
+                std::cout<<"BinaryOperator(left) is an Intliteral" << std::endl;
+                leftValIdent->compile(os, dstReg, context);
+                //os << "mv t0, a5" << std::endl;  // Save left operand in t0
+            }
+            else if(leftValIdent != nullptr){
+                leftValIdent->compile(os, dstReg, context);
+                std::cout<<"BinaryOperator(left) is Identifier" <<std::endl;
+                //std::cout << "BinaryOperator(left) has value: " << context.getVariableValue(leftValIdent->getID()) << std::endl;
+                os<<"lw a4, "<<leftValIdent->getOffset(context)<<"(s0)"<<std::endl;
+                //os << "mv t0, a4" << std::endl;
+            }
+
+            //check if right is an intliteral or a Identifier
+            const IntLiteral* rightValInt = dynamic_cast<const IntLiteral*>(right);
+            const Identifier* rightValIdent = dynamic_cast<const Identifier*>(right);
+            if(rightValInt != nullptr){
+                std::cout <<"BinaryOperator(right) is an Intliteral" <<std::endl;
+                rightValInt->compile(os, dstReg, context);
+                //os << "mv t1, a5" << std::endl;  // Save right operand in t0
+            }
+            else if(rightValIdent != nullptr){
+                rightValIdent->compile(os, dstReg, context);
+                std::cout<<"BinaryOperator(right) is an Identifier" <<std::endl;
+                //std::cout << "BinaryOperator(right) has value: " << context.getVariableValue(rightValIdent->getID())<< std::endl;
+                os << "lw a5, " << rightValIdent->getOffset(context) << "(s0)"<<std::endl;
+                //os << "mv t1, a5" << std::endl;
+            }
+        
+        switch (opType) {
+            case ADD:
+                os << "add a5, a4, a5" << std::endl;
+                break;
+            case SUBTRACT:
+                os << "sub a5, a4, a5" << std::endl; //NEEDS ASSIGN
+                break;
+            case MULTIPLY:
+                os << "mul a5, a4, a5" << std::endl;
+                break;
+            case DIVIDE:
+                os << "div a5, a4, a5" << std::endl;
+                break;
+            case MODULO:
+                os << "rem a5, a4, a5" << std::endl;
+                break;
+            case LEFT_SHIFT:
+                os << "sll a5, a4, a5" << std::endl;
+                break;
+            case RIGHT_SHIFT:
+                os << "srl a5, a4, a5" << std::endl;
+                break;
+            case LESS_THAN:
+                os << "slt a5, a4, a5" << std::endl;
+                break;
+            case GREATER_THAN:
+                os << "slt a5, a5, a4" << std::endl;
+                break;
+            case LESS_EQ:
+                os << "sle a5, a4, a5" << std::endl; //NEEDS ASSIGN
+                break;
+            case GREATER_EQ:
+                os << "sle a5, a5, a4" << std::endl;
+                break;
+            case EQUAL:
+                os << "sub a5, a4, a5" << std::endl;
+                os << "seqz a5, a5" << std::endl;
+                os << "andi a5, a5, 0xff" << std::endl;
+                break;
+            case NEQUAL:
+                os << "sne a5, a4, a5" << std::endl;
+                break;
+            case AND:
+                os << "and a5, a4, a5" << std::endl; 
+                break;
+            case XOR:
+                os << "xor a5, a4, a5" << std::endl;
+                break;
+            case OR:
+                os << "or a5, a4, a5" << std::endl; //NEEDS ASSIGN
+                break;
+            case LOGICAL_AND:
+                os << "sltu t0, a4, 1" << std::endl;
+                os << "sltu t1, a5, 1" << std::endl;
+                os << "or t2, t0, t1" << std::endl;
+                os << "xori a5, t2, 1" << std::endl;
+                break;
+            case LOGICAL_OR:
+                os << "sltu t0, a4, 1" << std::endl;
+                os << "sltu t1, a5, 1" << std::endl;
+                os << "and t2, t0, t1" << std::endl;
+                os << "xori a5, t2, 1" << std::endl;
+                break;
+            }
+        }
+    private:
+        OperatorType opType;
+        ASTNodePtr left;
+        ASTNodePtr right;
+};
+
+
+
+class Return: public ASTNode
+{
+public:
+    Return(ASTNodePtr expr):childnode(expr){
+        std::cout << "Return Called" << std::endl;
+    }
+    void compile(std::ostream& os, int dstReg, Context& context) const override {
+        std::cout<<"Return compile called"<<std::endl;
+        const IntLiteral* returnvalliteral = dynamic_cast<const IntLiteral*>(childnode);
+        std::cout<<"flag 1"<<std::endl;
+        const Identifier* returnvalidentifier = dynamic_cast<const Identifier*>(childnode);
+        std::cout<<"flag 2"<<std::endl;
+        const SizeOf* returnvalsizeof = dynamic_cast<const SizeOf*>(childnode);
+        std::cout<<"flag 3"<<std::endl;
+        const BinaryOperator* binary = dynamic_cast<const BinaryOperator*>(childnode);
+        if (returnvalliteral != nullptr){
+            returnvalliteral->compile(os, 10, context);
+            std::cout<<"returning "<<returnvalliteral->getintval()<<std::endl;
+        }
+        else if (returnvalidentifier != nullptr){
+            int returnval = returnvalidentifier->getVal(context);
+            std::cout<<"returning: "<<returnval<<std::endl;
+            int offset = returnvalidentifier->getOffset(context);
+            //load from memory into a5
+            returnvalidentifier->compile(os, 10, context);
+            os<<"lw a5, "<<offset<<"(sp)"<<std::endl;
+        }
+        else if (returnvalsizeof != nullptr){
+            int size;
+            std::cout<<"flag 4"<<std::endl;
+            returnvalsizeof->compile(os, dstReg, context);
+            size = returnvalsizeof->getSize();
+            os<<"li a5, "<<size<<std::endl;
+        }
+        else if (binary != nullptr){
+            binary->compile(os, dstReg, context);
+        }
+        
+        os << "mv a0, a5" << std::endl;
+        //function epilogue
+        os<<"lw s0, 28(sp)"<<std::endl;
+        os<<"addi sp, sp, 256"<<std::endl;
+        os << "jr ra"<<std::endl;
+        
+    }
+private:
+     ASTNodePtr childnode;
+};
+
+
+class initDeclarator: public ASTNode{
+
+    public:
+        initDeclarator(ASTNodePtr _declarator, ASTNodePtr _initialiser): declarator(_declarator), initialiser(_initialiser){
+            std::cout << "initDeclarator constructed" << std::endl;
+            if (initialiser == nullptr){
+                std::cout<<"null init constr";
+            }
+
+        }
+        void compile(std::ostream& os, int dstReg, Context& context) const override{
+            std::cout<< "initDeclarator compile called" << std::endl;
+            const Identifier* identifier = dynamic_cast<const Identifier*>(declarator);
+            const IntLiteral* intval = dynamic_cast<const IntLiteral*>(initialiser);
+            
+            
+            if (identifier != nullptr){
+                std::string varName = identifier->getID(); //should define varName for the class so it can be used later
+                name = varName;
+                //add to context
+                context.newVar(varName);
+                
+                //get new offset
+                int varOffset = context.getVariableOffset(varName);
+ 
+                std::cout << "initDeclarator compiled for varName: " << varName << " = " << varValue << std::endl;
+
+                if (initialiser != nullptr){
+                //check if we have initialiser than check which cast worked and get its value and store in varValue
+                    if (intval != nullptr){
+                        varValue = intval->getintval();
+                        intval->compile(os, dstReg, context);
+                    }   
+                }
+                else{
+                    varValue = 0;
+                }
+                context.addVariableValue(varName, varValue);
+            }
+
+            //Add varValue to context
+            
+
+            else{
+               std::cout<<"error: function name is null, expected identifier"<<std::endl;
+               }
+            if(initialiser == nullptr){
+                std::cout<<"Just a declaration"<<std::endl;
+                std::string varName = identifier->getID(); //messy but works
+            }
+        
+           
+        }
+        std::string GetName() const{
+            return name;
+        }
+
+        int test() const{return 5;}
+
+        private:
+            mutable std::string name;
+            mutable int varValue = 0;
+            ASTNodePtr declarator;
+            ASTNodePtr initialiser;  //_initialiser is = nullptr so that we can have no initialiser
+};
+
+
+class varDeclarator: public ASTNode{
+    public:
+        varDeclarator(Type* _returnType, initDeclarator* _init_decl): returnType(_returnType), init_decl(_init_decl){
+            std::cout << "varDeclarator constructed" << std::endl;
             
         }
         void compile(std::ostream& os, int dstReg, Context& context) const override{
+  
+            std::cout << "VarDeclarator compile called" << std::endl;
+
+            init_decl->compile(os, dstReg, context);
+            std::string varName = init_decl->GetName();
+
+            //add decl types to context
+            Type::TypeSpecifier varType = returnType->getType();
+            if (varType == Type::INT){
+            context.addVarType(varName, 1);}
+            else if (varType == Type::CHAR){
+                context.addVarType(varName, 2);
+            }
+        }
+
+        std::string getName()const{
+            return init_decl->GetName();
+        }
+    private:
+        Type* returnType;
+        initDeclarator* init_decl;
+};
+
+typedef std::vector<varDeclarator*> DeclList;
+
+extern DeclList* makeArgList(varDeclarator* decl);
+extern DeclList* appendArgList(DeclList* list1, DeclList* list2);
+
+class FuncWithArgs : public ASTNode{
+    public:
+        FuncWithArgs(ASTNodePtr _declarator, DeclList* _paramList):declarator(_declarator), paramList(_paramList){
+            std::cout<<"FuncWithArgs constructed"<<std::endl;
+        }
+        
+        void compile(std::ostream& os, int dstReg, Context& context) const override{
+            std::cout<<"FuncWithArgs Compile called"<<std::endl;
+            
+            const Identifier* funcName = dynamic_cast<const Identifier*>(declarator);
+            if (funcName == nullptr){
+                std::cout<<"Error: Could not cast 'declarator' to 'Identifier' class in'FuncWithArgs' ";
+            }
+            
+            os << ".globl "<< funcName->getID() << std::endl;
+            os << funcName->getID() <<":"<< std::endl;
+            os<<"addi sp, sp, -256"<<std::endl;
+            os<<"sw s0, 28(sp)"<<std::endl;
+            os<<"addi s0, sp, 256"<<std::endl;
+
+            std::cout << "param list size: " << paramList->size()<<std::endl;
+            
+            for (int i = 0; i < paramList->size(); i++){
+                std::cout << "Compiling arg: " << i << std::endl;
+                const varDeclarator* argdecl = dynamic_cast<const varDeclarator*>((*paramList)[i]);
+                
+                argdecl->compile(os, dstReg, context);
+                std::string varname = argdecl->getName();
+                //os << "sw a" << i << ", " << context.getVariableOffset(varname) << "(s0)" << std::endl;
+                std::cout << "Compiled arg: " << i << std::endl;
+            }
+        }
+    private:
+        ASTNodePtr declarator;
+        DeclList* paramList;
+};
+
+class FunctionDeclaration: public ASTNode{
+    public:
+        FunctionDeclaration(Type* _returnType, ASTNodePtr _declarator):funcName(_declarator), returnType(_returnType){
+            std::cout << "FuncDecl constructed" << std::endl;
+        }
+        void compile(std::ostream& os, int dstReg, Context& context) const override{
+            std::cout<<"FuncDecl Compile called"<<std::endl;
             const Identifier* identifier = dynamic_cast<const Identifier*>(funcName);
-            if (identifier != nullptr){
+            const FuncWithArgs* funcwithargs = dynamic_cast<const FuncWithArgs*>(funcName);
+
+            if (identifier != nullptr){ //check if f(), else its probably f(int x, int y)
+                std::cout<<"Flag rrr"<<std::endl;
                 std::string funcID = identifier->getID();
                 os << ".globl "<< funcID << std::endl;
                 os << funcID <<":"<< std::endl;
+                 //Function prologue:
+                os<<"addi sp, sp, -256"<<std::endl;
+                os<<"sw s0, 28(sp)"<<std::endl;
+                os<<"addi s0, sp, 256"<<std::endl;
+                
                 returnType->compile(os, dstReg, context);
                 }
+            else if (funcwithargs != nullptr){//check if its int f(intx, int y)
+
+                // std::string funcID = identifier->getID();
+                // os << ".globl "<< funcID << std::endl;
+                // os << funcID <<":"<< std::endl;
+                 //Function prologue:
+                funcwithargs->compile(os, dstReg, context);
+                
+                returnType->compile(os, dstReg, context);
+
+            }
             else{
-               std::cout<<"error: function name is null, expected identifier"<<std::endl;
+               std::cout << "error: function name is null, expected identifier" << std::endl;
                }
             //declarator->compile(os, dstReg);
             
@@ -163,14 +604,13 @@ class FunctionDefinition: public ASTNode{
             std::cout << "FunctionDefinition constructed" << std::endl;
         }
         void compile(std::ostream& os, int dstReg, Context& context) const override{
+            std::cout<<"FuncDef compile called"<<std::endl;
+            
             functdecl.compile(os, dstReg, context);
             std::cout<< "compiled funcdecl"<<std::endl;
 
 
-            //Function prologue:
-            os<<"addi sp, sp, -256"<<std::endl;
-            os<<"sw s0, 28(sp)"<<std::endl;
-            os<<"addi s0, sp, 256"<<std::endl;
+
             const makeScope* noscoper = dynamic_cast<const makeScope*>(statements);
             std::cout << "makescope cast"<<std::endl;
             if (noscoper != nullptr){
@@ -198,136 +638,32 @@ class FunctionDefinition: public ASTNode{
         ASTNodePtr statements;
 };
 
-class IntLiteral:public ASTNode
-{
-public:
-    IntLiteral(int _num):num(_num){ // :num(_num) is a shorthand way of setting the private "num" to the value of "_num" passed into the function through the parser
-        std::cout << "IntLiteral constructor of value: " << num << std::endl;
-    }
-    void compile(std::ostream& os, int dstReg, Context& context) const override {
-        std::cout<<"IntLiteral compile called"<<std::endl;
-        os << "li a5, "<< num << std::endl;
-    }
-    int getintval() const {
-        return num;
-    }
-private:
-    ASTNodePtr expression;
-    int num;
-
-};
-
-class Return: public ASTNode
-{
-public:
-    Return(ASTNodePtr expr):childnode(expr){
-        std::cout << "Return Called" << std::endl;
-    }
-    void compile(std::ostream& os, int dstReg, Context& context) const override {
-        const IntLiteral* returnvalliteral = dynamic_cast<const IntLiteral*>(childnode);
-        const Identifier* returnvalidentifier = dynamic_cast<const Identifier*>(childnode);
-        if (returnvalliteral != nullptr){
-            returnvalliteral->compile(os, 10, context);
-            std::cout<<"returning "<<returnvalliteral->getintval()<<std::endl;
-        }
-        else if (returnvalidentifier != nullptr){
-            int returnval = returnvalidentifier->getVal(context);
-            std::cout<<"returning: "<<returnval<<std::endl;
-            int offset = returnvalidentifier->getOffset(context);
-            //load from memory into a5
-            returnvalidentifier->compile(os, 10, context);
-            os<<"lw a5, "<<offset<<"(sp)"<<std::endl;
-
-            
-
-        }
-        
-        os << "mv a0, a5" << std::endl;
-        //function epilogue
-        os<<"lw s0, 64(sp)"<<std::endl;
-        os<<"addi sp, sp, 256"<<std::endl;
-        os << "jr ra"<<std::endl;
-        
-    }
-private:
-     ASTNodePtr childnode;
-};
-
-
-class initDeclarator: public ASTNode{
-
-    public:
-        initDeclarator(ASTNodePtr _declarator, ASTNodePtr _initialiser): declarator(_declarator), initialiser(_initialiser){
-            std::cout << "initDeclarator constructed" << std::endl;
-        }
-        void compile(std::ostream& os, int dstReg, Context& context) const override{
-            std::cout<<"initDeclarator compile called"<<std::endl;
-            const Identifier* identifier = dynamic_cast<const Identifier*>(declarator);
-            const IntLiteral* initval = dynamic_cast<const IntLiteral*>(initialiser);
-            if (initval != nullptr){
-                varValue = initval->getintval();
-            }
-            if (identifier != nullptr){
-                std::string varName = identifier->getID(); //should define varName for the class so it can be used later
-                //add to context
-                context.newVar(varName);
-                context.addVariableValue(varName, varValue);
-                //get new offset
-                int varOffset = context.getVariableOffset(varName);
-                initialiser->compile(os, dstReg, context);
-                std::cout << "initDeclarator compiled for varName: " << varName << " = " << varValue << std::endl;
-                }
-            else{
-               std::cout<<"error: function name is null, expected identifier"<<std::endl;
-               }
-            if(initialiser == nullptr){
-                std::string varName = identifier->getID(); //messy but works
-            }
-            else{
-                
-            }
-        }
-        private:
-            mutable int varValue = 0;
-            ASTNodePtr declarator;
-            ASTNodePtr initialiser = nullptr;  //_initialiser is = nullptr so that we can have no initialiser
-};
-
-
-class varDeclarator: public ASTNode{
-    public:
-        varDeclarator(Type* _returnType, initDeclarator* _init_decl): returnType(_returnType), init_decl(_init_decl){
-            std::cout << "varDeclarator constructed" << std::endl;
-        }
-        void compile(std::ostream& os, int dstReg, Context& context) const override{
-            init_decl->compile(os, dstReg, context);
-        }
-    private:
-        Type* returnType;
-        initDeclarator* init_decl;
-};
-
-// class varDeclaration: public ASTNode{
+// class Assign: public ASTNode{
 //     public:
-//         varDeclaration(Type* _returnType, ASTNodePtr _decl, ASTNodePtr _expression): returnType(_returnType), decl(_decl), expression(_expression) {}
-        
-//         void compile(std::ostream& os, int dstReg, Context& context) const override {
-//             const Identifier* identifier = dynamic_cast<const Identifier*>(decl);
-
-//             if(identifier != nullptr){
-//                 std::string varName = identifier->getID();
-//                 context.newVar(varName);
-//                 int varOffset = context.getVariableOffset(varName);
-//                 expression->compile(os, dstReg, context);
-//                 os << "sw " << "a0, " << varOffset << "(sp)" << std::endl;
-//                 }
-//             else{std::cout << "error: expected identifier"<<std::endl;}
+//         enum OperatorType{
+//             SIMPLE_ASSIGN,
+//             MUL_ASSIGN,
+//             DIV_ASSIGN,
+//             MOD_ASSIGN,
+//             ADD_ASSIGN,
+//             SUB_ASSIGN,
+//             LEFT_ASSIGN,
+//             RIGHT_ASSIGN,
+//             AND_ASSIGN,
+//             XOR_ASSIGN,
+//             OR_ASSIGN
+//         };
+//         Assign(ASTNodePtr _left, OperatorType _op, ASTNodePtr _right):{
+//                      
+//         }
+//         void compile(std::ostream& os, int dstReg, Context& context) const override{
 //         }
 //     private:
-//         Type* returnType;
-//         ASTNodePtr decl;
-//         ASTNodePtr expression;
+//         ASTNodePtr right;
+//         ASTNodePtr left;
+//         ASTNodePtr op;
 // };
+
 
 class CompoundStatement: public ASTNode {
 public:
@@ -343,6 +679,7 @@ public:
 private:
     std::vector<ASTNodePtr> stmts;
 };
+
 
 
 //PRIMITIVES:

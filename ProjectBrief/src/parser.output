@@ -460,10 +460,10 @@ Nonterminals, with rules where they appear
     declaration <node> (113)
         on left: 89 90
         on right: 5 194 195
-    init_declarator_list (114)
+    init_declarator_list <initDecl> (114)
         on left: 91 92
         on right: 90 92
-    init_declarator <node> (115)
+    init_declarator <initDecl> (115)
         on left: 93 94
         on right: 91 92
     storage_class_specifier (116)
@@ -517,13 +517,13 @@ Nonterminals, with rules where they appear
     type_qualifier_list (132)
         on left: 151 152
         on right: 148 150 152
-    parameter_type_list (133)
+    parameter_type_list <declList> (133)
         on left: 153 154
         on right: 144 173 175
-    parameter_list <node> (134)
+    parameter_list <declList> (134)
         on left: 155 156
         on right: 153 154 156
-    parameter_declaration <node> (135)
+    parameter_declaration <declList> (135)
         on left: 157 158 159
         on right: 155 156
     identifier_list <node> (136)

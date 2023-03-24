@@ -5,9 +5,11 @@
 #include <fstream>
 #include <iostream>
 #include <unordered_map>
+#include "ast.hpp"
 #include "../ast.hpp"
 
 typedef std::unordered_map<std::string, int> varMap;
+
 
 class Context {
     public:
@@ -32,7 +34,33 @@ class Context {
             return varValues[name];
         }
 
+        void addVarType(const std::string& varName, int typenum){
+            varTypes[varName] = typenum; 
+        }
+
+        int getVarType(const std::string& varName){
+            return varTypes[varName];
+        }
+
+        void addUsedReg(std::string regname){
+            usedReg[regname] = 1;
+        }
+
+        bool checkUsedReg(std::string regname){
+            if (usedReg[regname] == 1){
+                return 1;
+            }
+            else{
+                return 0;
+            }
+        }
+
+        void resetRegMap(){
+            usedReg.clear();
+        }
     private:
+        varMap usedReg;
+        varMap varTypes;
         varMap varOffset;
         varMap varValues;
         int currOffset = -64;
