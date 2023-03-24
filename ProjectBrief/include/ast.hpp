@@ -231,6 +231,8 @@ private:
 
 };
 
+
+
 class SizeOf : public ASTNode {
 
     public:
@@ -274,6 +276,7 @@ class SizeOf : public ASTNode {
         ASTNodePtr expr;
         mutable int size;
 };
+
 
 class BinaryOperator: public ASTNode{
     public:
@@ -556,6 +559,38 @@ private:
      
      ASTNodePtr childnode;
 };
+
+class ifStatement: public ASTNode{
+    public:
+        ifStatement(ASTNodePtr _cond, ASTNodePtr _ifBody, ASTNodePtr _elseBody):cond(_cond), ifBody(_ifBody), elseBody(_elseBody){
+
+        }
+        void compile(std::ostream &os, int dstReg, Context& context) const override{
+
+            const IntLiteral* intliteral = dynamic_cast<const IntLiteral*>(cond);
+            
+            if(intliteral->getintval() == 1){//check condition
+                const Return* returnbody = dynamic_cast<const Return*>(ifBody);
+                if (returnbody != nullptr){
+                    returnbody->compile(os, dstReg, context);
+
+                }
+            }
+            else{
+                if (elseBody != nullptr){
+                    //cast elsebody
+                    const Return* elsecast = dynamic_cast<const Return*>(elseBody);
+                    elsecast->compile(os, dstReg, context);
+                }
+            }
+        }
+    private:
+        ASTNodePtr cond;
+        ASTNodePtr ifBody;
+        ASTNodePtr elseBody;
+
+};
+
 
 
 class initDeclarator: public ASTNode{
