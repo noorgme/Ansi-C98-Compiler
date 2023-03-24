@@ -245,7 +245,7 @@ assignment_operator
 	| AND_ASSIGN  {$$ = '&';}
 	| XOR_ASSIGN  {$$ = 'x';}
 	| OR_ASSIGN  {$$ = '|';}
-	| LE_OP {$$ = 'l';}
+	| LE_OP {$$ = 'l';}  	//!!!!!!	//is this supposed to be here? implmented in binary op?
 	;
 
 expression

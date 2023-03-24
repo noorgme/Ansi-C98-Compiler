@@ -241,12 +241,9 @@ class SizeOf : public ASTNode {
         //check if identifier
         std::cout<<"SizeOf compile called"<<std::endl;
         const IntLiteral* intliteral = dynamic_cast<const IntLiteral*>(expr);
-        std::cout<<"flag 5"<<std::endl;
         const Identifier* identifier = dynamic_cast<const Identifier*>(expr);
         const Type* typer = dynamic_cast<const Type*>(expr);
-        
-        
-        std::cout<<"flag 6"<<std::endl;
+    
         if (identifier != nullptr){
             int type = identifier->getVarType(context);
             if (type == 1){
@@ -332,7 +329,7 @@ class BinaryOperator: public ASTNode{
                     os<<"flw fa4, "<<leftValIdent->getOffset(context)<<"(s0)"<<std::endl;
                 }
                 else if (type == 1){
-                //INT
+                    //INT
                 os<<"lw a4, "<<leftValIdent->getOffset(context)<<"(s0)"<<std::endl;
                 }
                 //os << "mv t0, a4" << std::endl;
@@ -387,7 +384,7 @@ class BinaryOperator: public ASTNode{
                 }
                 break;
             case SUBTRACT:
-                os << "sub a5, a4, a5" << std::endl; //NEEDS ASSIGN
+                os << "sub a5, a4, a5" << std::endl; //NOT WORKING!!!!
                 break;
             case MULTIPLY:
                 if (type == 5){
@@ -419,7 +416,7 @@ class BinaryOperator: public ASTNode{
                 os << "slt a5, a5, a4" << std::endl;
                 break;
             case LESS_EQ:
-                os << "sle a5, a4, a5" << std::endl; //NEEDS ASSIGN
+                os << "sle a5, a4, a5" << std::endl; //NOT WORKING!!
                 break;
             case GREATER_EQ:
                 os << "sle a5, a5, a4" << std::endl;
@@ -779,8 +776,8 @@ class Assign: public ASTNode{
                 leftIdent->compile(os, dstReg, context); 
                 std::string reg;
                 if (context.checkUsedReg("a4")){reg = "a5";}
-                else{reg = "a4";context.addUsedReg("a4");}
-                os << "lw "<<reg<<", "<< leftIdent->getOffset(context) << "(s0)" << std::endl;
+                else{reg = "a4"; context.addUsedReg("a4");}
+                os << "lw "<< reg << ", "<< leftIdent->getOffset(context) << "(s0) should be a5?" << std::endl;
             }
             const IntLiteral* rightVal = dynamic_cast<const IntLiteral*>(right);
             const BinaryOperator* rightValBinary = dynamic_cast<const BinaryOperator*>(right);
@@ -791,43 +788,56 @@ class Assign: public ASTNode{
                 rightValBinary->compile(os, dstReg, context);
             }
             else{
+                //if the RHS is an expression, compile it
+                //TODO: not sure if this is correct implmenetation
                 right->compile(os, dstReg, context);
             }
             
-
+            //TODO: need to add a type check here because right will not always be an INT
             switch (op){
                 case '=':
                     os << "sw a5, "<< leftIdent->getOffset(context) << "(s0)" <<std::endl;
                     break;
                 case '*':
-                    os << "mul aX, aX, t" << std::endl;
+                    //godbolt expects "lw a4, offset (s0)" to be the previous instruction
+                    //TODO: assembly output changes based on the value of RHS
+                    os << "mv a4, a5 "<< std::endl;
+                    os << "slii a5, a5, 2" << std::endl;
                     break;
                 case '/':
-                    os << "div aX, aX, t" << std::endl;
+                    os << "li a5, " << rightVal->getintval() << std::endl;
+                    os << "div a5, a4, a5" << std::endl;
                     break;
-                case '%':
-                    os << "rem aX, aX, t" << std::endl;
+                case '%': //expect lw into a4 again
+                    //TODO: this for anything that is not a power of 2, for that its different assembly
+                    os << "li a5, " << rightVal->getintval() << std::endl; 
+                    os << "rem a5, a4, a5 "<< std::endl; 
+                    os << "sw a5, "<< leftIdent->getOffset(context) << "(s0)" <<std::endl;
                     break;
                 case '+':
-                    os << "add aX, aX, t" << std::endl;
+                    os << "addi a5, a5, " << rightVal->getintval() << std::endl;
+                    os << "sw a5, "<< leftIdent->getOffset(context) << "(s0)" <<std::endl;
                     break;
                 case '-':
-                    os << "sub aX, aX, t" << std::endl;
+                    os << "addi a5, a5, " << -(rightVal->getintval()) << std::endl;
+                    os << "sw a5, "<< leftIdent->getOffset(context) << "(s0)" <<std::endl;
                     break;
                 case '<':
-                    os << "sll aX, aX, t" <<  std::endl;
+                    os << "slli a5, a5 " << rightVal->getintval() <<  std::endl;
                     break;
-                case '>':
-                    os << "sra aX, aX, t"<<  std::endl;
+                case '>': // '>>='
+                    os << "srai a5, a5 " << rightVal->getintval() <<  std::endl;
                     break;
                 case '&':
-                    os << "and aX, aX, t"<<  std::endl;
+                    os << "andi a5, a5, " << rightVal->getintval() << std::endl;
+                    os << "sw a5, "<< leftIdent->getOffset(context) << "(s0)" <<std::endl;
                     break;
                 case 'x':
-                    os << "xor aX, aX, t"<< std::endl;
+                    os << "xori a5, a5 " << rightVal->getintval() << std::endl;
                     break;
                 case '|':
-                    os << "or aX, aX, t"<<  std::endl;
+                    os << "ori a5, a5, " << rightVal->getintval() << std::endl;
+                    os << "sw a5, "<< leftIdent->getOffset(context) << "(s0)" <<std::endl;
                     break;
                 case 'l':
                     os<< "sgt a5, a4, a5" <<std::endl;
