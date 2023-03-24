@@ -70,6 +70,12 @@ class makeScope : public ASTNode
 };
 
 
+
+//RETURN
+
+
+
+
 //TYPES
 
 class Type: public ASTNode {
@@ -125,20 +131,40 @@ public:
         std::cout<<"Identifier compile called"<<std::endl;
         int varOffset = context.getVariableOffset(str);
         std::string reg;
-        reg = context.getNextAvailableReg(context, "a0");
+        if (context.checkUsedReg("a0")){
+            if (context.checkUsedReg("a1")){
+                if (context.checkUsedReg("a2")){
+                    reg = "a3";
+                    context.addUsedReg("a3");
+                }
+                else{
+                    reg = "a2";
+                    context.addUsedReg("a2");
+                }
+
+            }
+            else{
+                reg = "a1";
+                context.addUsedReg("a1");
+            }
+        }
+        else{
+            reg = "a0";
+            context.addUsedReg("a0");
+        }
         if (context.getVarType(str) == 5){
             //DOUBLE
-            os<<"fsd f" << reg << ", " << varOffset<<"(s0)"<<std::endl;
+            os<<"fsd f"<<reg<<", "<<varOffset<<"(s0)"<<std::endl;
 
         }
         else if (context.getVarType(str) == 1){
             //INT
             std::cout<<"doing overwrite"<<std::endl;
-            os<<"sw " << reg << ", " << varOffset <<"(s0)"<<std::endl;
+            os<<"sw "<<reg<<", "<<varOffset<<"(s0)"<<std::endl;
         }
         else if (context.getVarType(str) == 3){
             //FLOAT
-            os<<"fsw f" << reg << ", "<<varOffset<<"(s0)"<<std::endl;
+            os<<"fsw f"<<reg<<", "<<varOffset<<"(s0)"<<std::endl;
         }
         
 
@@ -276,23 +302,14 @@ class BinaryOperator: public ASTNode{
 
         }
 
-        ASTNodePtr getLeft() const{
-            return left;
-        }
-
-        ASTNodePtr getRight() const{
-            return right;
-        }
+        
         void compile(std::ostream &os, int dstReg, Context& context) const override {
-            std::string tmpreg = context.getNextAvailableReg(context);
-            int tmpr = context.getRegisterNumber(tmpreg);
             std::cout << "BinaryOperator compile called" << std::endl;
 
             //check if left is an intliteral or a Identifier or floatliteral
             const IntLiteral* leftValInt = dynamic_cast<const IntLiteral*>(left);
             const Identifier* leftValIdent = dynamic_cast<const Identifier*>(left);
             const FloatLiteral* leftValFloat = dynamic_cast<const FloatLiteral*>(left);
-        
             if(leftValInt != nullptr){
                 std::cout<<"BinaryOperator(left) is an Intliteral" << std::endl;
                 leftValIdent->compile(os, dstReg, context);
@@ -303,22 +320,27 @@ class BinaryOperator: public ASTNode{
                 std::cout<<"BinaryOperator(left) is Identifier" <<std::endl;
                 //std::cout << "BinaryOperator(left) has value: " << context.getVariableValue(leftValIdent->getID()) << std::endl;
                 type = leftValIdent->getVarType(context);
-                
-                
-                
-
-                //LOAD VAR INTO REG SO WE CAN USE IT
+                //get reg
+                std::string reg;
+                if (context.checkUsedReg("a4")){
+                    reg = "a5";
+                    context.addUsedReg("a5");
+                }
+                else{
+                    reg = "a4"; 
+                    context.addUsedReg("a4");
+                }
                 if (type == 5){
                     //DOUBLE
-                    os<< "fld f" << context.getRegisterName(dstReg) <<", "<<leftValIdent->getOffset(context)<<"(s0)"<<std::endl;
+                    os<<"fld f"<<reg<<", "<<leftValIdent->getOffset(context)<<"(s0)"<<std::endl;
                 }
                 else if (type == 3 ){
                     //FLOAT
-                    os<< "flw f"<<context.getRegisterName(dstReg)<<", "<<leftValIdent->getOffset(context)<<"(s0)"<<std::endl;
+                    os<<"flw f"<<reg<<", "<<leftValIdent->getOffset(context)<<"(s0)"<<std::endl;
                 }
                 else if (type == 1){
                     //INT
-                    os << "lw "<<context.getNextAvailableReg(context)<<", "<<leftValIdent->getOffset(context)<<"(s0)"<<std::endl;
+                    os<<"lw "<<reg<<", "<<leftValIdent->getOffset(context)<<"(s0)"<<std::endl;
                 }
                 //os << "mv t0, a4" << std::endl;
             }
@@ -331,7 +353,6 @@ class BinaryOperator: public ASTNode{
             const IntLiteral* rightValInt = dynamic_cast<const IntLiteral*>(right);
             const Identifier* rightValIdent = dynamic_cast<const Identifier*>(right);
             const FloatLiteral* rightValFloat = dynamic_cast<const FloatLiteral*>(right);
-            const BinaryOperator* rightValBinary = dynamic_cast<const BinaryOperator*>(right);
             if(rightValInt != nullptr){
                 std::cout <<"BinaryOperator(right) is an Intliteral" <<std::endl;
                 rightValInt->compile(os, dstReg, context);
@@ -343,32 +364,40 @@ class BinaryOperator: public ASTNode{
                 //std::cout << "BinaryOperator(right) has value: " << context.getVariableValue(rightValIdent->getID())<< std::endl;
                 type = leftValIdent->getVarType(context);
 
-      
+                std::string reg2;
+                if (context.checkUsedReg("a4")){
+                    if(context.checkUsedReg("a5")){
+                        reg2 = "a6";
+                        context.addUsedReg("a6");
+                    }
+                
+                    else{
+                        reg2 = "a5";
+                        context.addUsedReg("a5");
+                    }
+                }
+                else{
+                    reg2 = "a4";
+                    context.addUsedReg("a4");
+                    }
+
+
                 
 
                 if (type == 5){
                     //DOUBLE
-                    os<<"fld f"<<context.getRegisterName(dstReg)<<", "<<rightValIdent->getOffset(context)<<"(s0)"<<std::endl;
+                    os<<"fld f"<<reg2<<", "<<rightValIdent->getOffset(context)<<"(s0)"<<std::endl;
                 }
                 else if (type ==3 ){
                     //FLOAT
-                    os<<"flw f"<<context.getRegisterName(dstReg)<<", "<<rightValIdent->getOffset(context)<<"(s0)"<<std::endl;
+                    os<<"flw f"<<reg2<<", "<<rightValIdent->getOffset(context)<<"(s0)"<<std::endl;
                 }
                 else if (type == 1){
                 //INT
-                os << "lw " <<context.getRegisterName(dstReg)<< ", " << rightValIdent->getOffset(context)<<"(s0)"<<std::endl;
+                os<<"lw "<<reg2<<", "<<rightValIdent->getOffset(context)<<"(s0)"<<std::endl;
                 }
                 //os << "mv t1, a5" << std::endl;
             }
-            else if(rightValBinary != nullptr){ 
-                std::cout << "BinaryOperator (right) is anodda Binary Operator" << std::endl;
-                rightValBinary->compile(os, tmpr, context);
-                
-            }
-        
-        
-        std::string freg1 = "fa4";
-        std::string freg2 = "fa5";
         
         switch (opType) {
             case ADD:
@@ -379,11 +408,11 @@ class BinaryOperator: public ASTNode{
                     os << "fadd.s fa5, fa4, fa5" << std::endl;
                 }
                 else{
-                os << "add " << context.getRegisterName(dstReg) <<"," << tmpreg << ", " << context.getRegisterName(dstReg) << std::endl;
+                os << "add a5, a4, a5" << std::endl;
                 }
                 break;
             case SUBTRACT:
-                os << "sub " << context.getRegisterName(dstReg) << "," << tmpreg <<", " << context.getRegisterName(dstReg) << std::endl; //NOT WORKING!!!!
+                os << "sub a5, a4, a5" << std::endl; //NOT WORKING!!!!
                 break;
             case MULTIPLY:
                 if (type == 5){
@@ -393,71 +422,61 @@ class BinaryOperator: public ASTNode{
                     os << "fmul.s fa5, fa4, fa5" << std::endl;
                 }
                 else{
-                os << "mul " << context.getRegisterName(dstReg) << ", " << tmpreg << ", " << context.getRegisterName(dstReg) << "" << std::endl;
+                os << "mul a5, a4, a5" << std::endl;
                 }
                 break;
             case DIVIDE:
-                if (type == 5){
-                    os << "fdiv.d fa5, fa4, fa5" << std::endl;
-                }
-                else if (type == 3){
-                    os << "fdiv.s fa5, fa4, fa5" << std::endl;
-                }
-                else{
-                os << "div " << context.getRegisterName(dstReg) << ", " << tmpreg << ", " << context.getRegisterName(dstReg) << "" << std::endl;
-                }
+                os << "div a5, a4, a5" << std::endl;
                 break;
             case MODULO:
-                os << "rem " << context.getRegisterName(dstReg) << ", " << tmpreg << ", " << context.getRegisterName(dstReg) << "" << std::endl;
+                os << "rem a5, a4, a5" << std::endl;
                 break;
             case LEFT_SHIFT:
-                os << "sll " << context.getRegisterName(dstReg) << ", " << tmpreg << ", " << context.getRegisterName(dstReg) << "" << std::endl;
+                os << "sll a5, a4, a5" << std::endl;
                 break;
             case RIGHT_SHIFT:
-                os << "srl " << context.getRegisterName(dstReg) << ", " << tmpreg << ", " << context.getRegisterName(dstReg) << "" << std::endl;
+                os << "srl a5, a4, a5" << std::endl;
                 break;
             case LESS_THAN:
-                os << "slt " << context.getRegisterName(dstReg) << ", " << tmpreg << ", " << context.getRegisterName(dstReg) << "" << std::endl;
+                os << "slt a5, a4, a5" << std::endl;
                 break;
             case GREATER_THAN:
-                os << "slt " << context.getRegisterName(dstReg) << ", " << tmpreg << ", " << context.getRegisterName(dstReg) << "" << std::endl;
+                os << "slt a5, a5, a4" << std::endl;
                 break;
             case LESS_EQ:
-                os<< "sgt " << context.getRegisterName(dstReg) << ", " << tmpreg << ", " << context.getRegisterName(dstReg) << "" <<std::endl;
-                os<< "xori " << context.getRegisterName(dstReg) << ", " << context.getRegisterName(dstReg) << ", 1" <<std::endl;
-                os<< "andi " << context.getRegisterName(dstReg) << ", " << tmpreg << ", 0xff" <<std::endl;
+                os << "sle a5, a4, a5" << std::endl; //NOT WORKING!!
                 break;
             case GREATER_EQ:
-                os << "sle " << context.getRegisterName(dstReg) << ", " << context.getRegisterName(dstReg) << ", " << tmpreg << "" << std::endl;
+                os << "sle a5, a5, a4" << std::endl;
                 break;
             case EQUAL:
-                os << "sub " << context.getRegisterName(dstReg) << ", " << tmpreg << ", " << context.getRegisterName(dstReg) << "" << std::endl;
-                os << "seqz " << context.getRegisterName(dstReg) << ", " << context.getRegisterName(dstReg) << "" << std::endl;
-                os << "andi " << context.getRegisterName(dstReg) << ", " << context.getRegisterName(dstReg) << ", 0xff" << std::endl;
+                os << "sub a5, a4, a5" << std::endl;
+                os << "seqz a5, a5" << std::endl;
+                os << "andi a5, a5, 0xff" << std::endl;
                 break;
             case NEQUAL:
-                os << "sne " << context.getRegisterName(dstReg) << ", " << tmpreg << ", " << context.getRegisterName(dstReg) << "" << std::endl;
+                os << "sne a5, a4, a5" << std::endl;
                 break;
             case AND:
-                os << "and " << context.getRegisterName(dstReg) << ", " << tmpreg << ", " << context.getRegisterName(dstReg) << "" << std::endl; 
+                os << "and a5, a4, a5" << std::endl; 
                 break;
             case XOR:
-                os << "xor " << context.getRegisterName(dstReg) << ", " << tmpreg << ", " << context.getRegisterName(dstReg) << "" << std::endl;
+                os << "xor a5, a4, a5" << std::endl;
                 break;
             case OR:
-                os << "or " << context.getRegisterName(dstReg) << ", " << tmpreg << ", " << context.getRegisterName(dstReg) << "" << std::endl; //NEEDS ASSIGN
+                os << "or a5, a4, a5" << std::endl; //NEEDS ASSIGN
                 break;
             case LOGICAL_AND:
-                os << "sltu t0, " << tmpreg << ", 1" << std::endl;
-                os << "sltu t1, " << context.getRegisterName(dstReg) << ", 1" << std::endl;
+                os << "sltu t0, a4, 1" << std::endl;
+                os << "sltu t1, a5, 1" << std::endl;
                 os << "or t2, t0, t1" << std::endl;
-                os << "xori " << context.getRegisterName(dstReg) << ", t2, 1" << std::endl;
+                os << "xori a5, t2, 1" << std::endl;
                 break;
             case LOGICAL_OR:
-                os << "sltu t0" << tmpreg << " 1" << std::endl;
-                os << "sltu t1, " << context.getRegisterName(dstReg) << ", 1" << std::endl;
+                os << "sltu t0, a4, 1" << std::endl;
+                os << "sltu t1, a5, 1" << std::endl;
                 os << "and t2, t0, t1" << std::endl;
-                os << "xori " << context.getRegisterName(dstReg) << ", t2, 1" << std::endl;
+                os << "xori a5, t2, 1" << std::endl;
                 break;
             }
         }
@@ -782,54 +801,25 @@ class Assign: public ASTNode{
 
         void compile(std::ostream& os, int dstReg, Context& context) const override{
 
-            const Identifier* leftIdent = dynamic_cast<const Identifier*>(left); //x = 3, //left should always be identifier
-            
-            const Identifier* rightIdent = dynamic_cast<const Identifier*>(right); 
+            const Identifier* leftIdent = dynamic_cast<const Identifier*>(left); //x = 3, try cast x (ASTNodePtr 'left') to an Identifier
+            if(leftIdent != nullptr){//left should always be identifier
+                leftIdent->compile(os, dstReg, context); 
+                std::string reg;
+                if (context.checkUsedReg("a4")){reg = "a5";context.addUsedReg("a5");}
+                else{reg = "a4"; context.addUsedReg("a4");}
+                os << "lw "<< reg << ", "<< leftIdent->getOffset(context) << "(s0)" << std::endl; //messing up for logica_or test
+            }
             const IntLiteral* rightVal = dynamic_cast<const IntLiteral*>(right);
             const BinaryOperator* rightValBinary = dynamic_cast<const BinaryOperator*>(right);
-            if(leftIdent != nullptr){
-                leftIdent->compile(os, dstReg, context); 
-                
-                
-                
-                os << "lwa "<< dstReg << ", "<< leftIdent->getOffset(context) << "(s0)" << std::endl; //messing up for logica_or test
-            }
-
             if(rightVal != nullptr){
                 rightVal->compile(os, dstReg, context);
             }
-            else if(rightValBinary != nullptr){ //if right is binary expr
-                
-                
-                //Check if both binaries are identifiers
-                const Identifier* leftAssignBinary = dynamic_cast<const Identifier*>(rightValBinary->getLeft());
-                const Identifier* rightAssignBinary = dynamic_cast<const Identifier*>(rightValBinary->getLeft());
-                if (leftAssignBinary!=nullptr && rightAssignBinary != nullptr){
-                    //Check if trying to do  y=y+y which is a multiply by 2
-                    if (leftAssignBinary->getID()==rightAssignBinary->getID() && leftIdent->getID() == leftAssignBinary->getID()){
-                        os<< "lw a5, "<<leftIdent->getOffset(context)<<"(s0)"<<std::endl;
-                        os<<"slli a5, a5, 1"<<std::endl;
-                        os<<"sw a5 "<<leftIdent->getOffset(context)<<"(s0)"<<std::endl;
-                    }
-                    else{
-                        std::cout<<"oh no :("<<std::endl;
-                        //Not doing mul by 2, just compile
-                        
-                        rightValBinary->compile(os, dstReg, context);
-                    }
-                }
-                
-            }
-            else if(rightIdent != nullptr){
-                if(rightIdent->getID() == leftIdent->getID()){
-                    //TODO: do something special with registers if x = x is called for example
-                    //need it to work for x = x + 3 etc too
-                }
-                rightIdent->compile(os, dstReg, context);
+            else if(rightValBinary != nullptr){
+                rightValBinary->compile(os, dstReg, context);
             }
             else{
                 //if the RHS is an expression, compile it
-                std::cout << "!!!!!" << std::endl;
+                //TODO: not sure if this is correct implmenetation
                 right->compile(os, dstReg, context);
             }
             
@@ -847,7 +837,7 @@ class Assign: public ASTNode{
                     os << "li a5, " << rightVal->getintval() << std::endl;
                     os << "div a5, a4, a5" << std::endl;
                     break;
-                case '%': 
+                case '%': //expect lw into a4 again
                     //TODO: this for anything that is not a power of 2, for that its different assembly
                     os << "li a5, " << rightVal->getintval() << std::endl; 
                     os << "rem a5, a4, a5 "<< std::endl; 
@@ -878,7 +868,12 @@ class Assign: public ASTNode{
                     os << "ori a5, a5, " << rightVal->getintval() << std::endl;
                     os << "sw a5, "<< leftIdent->getOffset(context) << "(s0)" <<std::endl;
                     break;
-
+                case 'l':
+                    os<< "sgt a5, a4, a5" <<std::endl;
+                    os<< "xori a5, a5, 1" <<std::endl;
+                    os<< "andi a5, a5, 0xff" <<std::endl;
+                    //os<< "sw a5, -20(s0)" <<std::endl;
+                    break;
                 }
         }
     private:
