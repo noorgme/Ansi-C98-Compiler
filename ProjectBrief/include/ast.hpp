@@ -102,6 +102,15 @@ class Type: public ASTNode {
             case CHAR:
                 std::cout<<"CHAR typespec called"<<std::endl;
                 break;
+            case FLOAT:
+                std::cout<<"FLOAT typespec specified"<<std::endl;
+                break;
+             case DOUBLE:
+                std::cout<<"DOUBLE typespec specified"<<std::endl;
+                break;
+             case VOID:
+                std::cout<<"VOID typespec specified"<<std::endl;
+                break;                   
         }
     }
 
@@ -136,7 +145,24 @@ public:
             reg = "a0";
             context.addUsedReg("a0");
         }
-        os<<"sw "<<reg<<", "<<varOffset<<"(s0)"<<std::endl;
+        if (context.getVarType(str) == 5){
+            //DOUBLE
+            os<<"fsd f"<<reg<<", "<<varOffset<<"(s0)"<<std::endl;
+
+        }
+        else if (context.getVarType(str) == 1){
+            //INT
+            os<<"sw "<<reg<<", "<<varOffset<<"(s0)"<<std::endl;
+        }
+        else if (context.getVarType(str) == 3){
+            //FLOAT
+            os<<"fsw f"<<reg<<", "<<varOffset<<"(s0)"<<std::endl;
+        }
+        
+
+        else{
+            std::cout << "type not implemented" << std::endl;
+        }
     }
     std::string getID() const{
         std::cout << "getID Called" << std::endl;
@@ -161,7 +187,22 @@ private:
 //DEFINITION & DECLARATION:
 
 
-
+class FloatLiteral: public ASTNode {
+    public:
+        FloatLiteral(double _floater):floater(_floater){
+            std::cout<<"float literal constructed"<<std::endl;
+        };
+        void compile(std::ostream& os, int dstReg, Context& context) const override {
+        std::cout<<"Float literal compile called"<<std::endl;
+        }
+        
+        double getVal() const{
+            return floater;
+        }
+        
+    private:
+        double floater;
+};
 
 class IntLiteral:public ASTNode
 {
@@ -260,9 +301,10 @@ class BinaryOperator: public ASTNode{
         void compile(std::ostream &os, int dstReg, Context& context) const override {
             std::cout << "BinaryOperator compile called" << std::endl;
 
-            //check if left is an intliteral or a Identifier
+            //check if left is an intliteral or a Identifier or floatliteral
             const IntLiteral* leftValInt = dynamic_cast<const IntLiteral*>(left);
             const Identifier* leftValIdent = dynamic_cast<const Identifier*>(left);
+            const FloatLiteral* leftValFloat = dynamic_cast<const FloatLiteral*>(left);
             if(leftValInt != nullptr){
                 std::cout<<"BinaryOperator(left) is an Intliteral" << std::endl;
                 leftValIdent->compile(os, dstReg, context);
@@ -272,13 +314,30 @@ class BinaryOperator: public ASTNode{
                 leftValIdent->compile(os, dstReg, context);
                 std::cout<<"BinaryOperator(left) is Identifier" <<std::endl;
                 //std::cout << "BinaryOperator(left) has value: " << context.getVariableValue(leftValIdent->getID()) << std::endl;
+                type = leftValIdent->getVarType(context);
+                if (type == 5){
+                    //DOUBLE
+                    os<<"fld fa4, "<<leftValIdent->getOffset(context)<<"(s0)"<<std::endl;
+                }
+                else if (type == 3 ){
+                    //FLOAT
+                    os<<"flw fa4, "<<leftValIdent->getOffset(context)<<"(s0)"<<std::endl;
+                }
+                else if (type == 1){
+                //INT
                 os<<"lw a4, "<<leftValIdent->getOffset(context)<<"(s0)"<<std::endl;
+                }
                 //os << "mv t0, a4" << std::endl;
+            }
+            else if(leftValFloat != nullptr){
+                leftValFloat->compile(os, dstReg, context);
+                //shouldnt reach?
             }
 
             //check if right is an intliteral or a Identifier
             const IntLiteral* rightValInt = dynamic_cast<const IntLiteral*>(right);
             const Identifier* rightValIdent = dynamic_cast<const Identifier*>(right);
+            const FloatLiteral* rightValFloat = dynamic_cast<const FloatLiteral*>(right);
             if(rightValInt != nullptr){
                 std::cout <<"BinaryOperator(right) is an Intliteral" <<std::endl;
                 rightValInt->compile(os, dstReg, context);
@@ -288,19 +347,47 @@ class BinaryOperator: public ASTNode{
                 rightValIdent->compile(os, dstReg, context);
                 std::cout<<"BinaryOperator(right) is an Identifier" <<std::endl;
                 //std::cout << "BinaryOperator(right) has value: " << context.getVariableValue(rightValIdent->getID())<< std::endl;
-                os << "lw a5, " << rightValIdent->getOffset(context) << "(s0)"<<std::endl;
+                type = leftValIdent->getVarType(context);
+                if (type == 5){
+                    //DOUBLE
+                    os<<"fld fa5, "<<rightValIdent->getOffset(context)<<"(s0)"<<std::endl;
+                }
+                else if (type ==3 ){
+                    //FLOAT
+                    os<<"flw fa5, "<<rightValIdent->getOffset(context)<<"(s0)"<<std::endl;
+                }
+                else if (type == 1){
+                //INT
+                os<<"lw a5, "<<rightValIdent->getOffset(context)<<"(s0)"<<std::endl;
+                }
                 //os << "mv t1, a5" << std::endl;
             }
         
         switch (opType) {
             case ADD:
+                if (type == 5){
+                    os << "fadd.d fa5, fa4, fa5" << std::endl;
+                }
+                else if (type == 3){
+                    os << "fadd.s fa5, fa4, fa5" << std::endl;
+                }
+                else{
                 os << "add a5, a4, a5" << std::endl;
+                }
                 break;
             case SUBTRACT:
                 os << "sub a5, a4, a5" << std::endl; //NEEDS ASSIGN
                 break;
             case MULTIPLY:
+                if (type == 5){
+                    os << "fmul.d fa5, fa4, fa5" << std::endl;
+                }
+                else if (type == 3){
+                    os << "fmul.s fa5, fa4, fa5" << std::endl;
+                }
+                else{
                 os << "mul a5, a4, a5" << std::endl;
+                }
                 break;
             case DIVIDE:
                 os << "div a5, a4, a5" << std::endl;
@@ -357,7 +444,12 @@ class BinaryOperator: public ASTNode{
                 break;
             }
         }
+
+        int giveType() const{
+            return type;
+        }
     private:
+        mutable int type = 0;
         OperatorType opType;
         ASTNodePtr left;
         ASTNodePtr right;
@@ -373,12 +465,13 @@ public:
     }
     void compile(std::ostream& os, int dstReg, Context& context) const override {
         std::cout<<"Return compile called"<<std::endl;
+        bool returned = 0;
         const IntLiteral* returnvalliteral = dynamic_cast<const IntLiteral*>(childnode);
-        std::cout<<"flag 1"<<std::endl;
+        
         const Identifier* returnvalidentifier = dynamic_cast<const Identifier*>(childnode);
-        std::cout<<"flag 2"<<std::endl;
+      
         const SizeOf* returnvalsizeof = dynamic_cast<const SizeOf*>(childnode);
-        std::cout<<"flag 3"<<std::endl;
+       
         const BinaryOperator* binary = dynamic_cast<const BinaryOperator*>(childnode);
         if (returnvalliteral != nullptr){
             returnvalliteral->compile(os, 10, context);
@@ -401,9 +494,19 @@ public:
         }
         else if (binary != nullptr){
             binary->compile(os, dstReg, context);
+            if (binary->giveType() == 3){
+                //float
+                os << "fmv.s fa0, fa5" << std::endl;
+                returned = 1;
+            }
+            else if (binary->giveType() == 5){
+                //double
+                os << "fmv.d fa0, fa5" << std::endl;
+                returned = 1;
+            };
         }
-        
-        os << "mv a0, a5" << std::endl;
+        if (returned != 1){
+        os << "mv a0, a5" << std::endl;}
         //function epilogue
         os<<"lw s0, 28(sp)"<<std::endl;
         os<<"addi sp, sp, 256"<<std::endl;
@@ -411,6 +514,7 @@ public:
         
     }
 private:
+     
      ASTNodePtr childnode;
 };
 
@@ -502,6 +606,18 @@ class varDeclarator: public ASTNode{
             else if (varType == Type::CHAR){
                 context.addVarType(varName, 2);
             }
+            else if (varType == Type::FLOAT){
+                context.addVarType(varName, 3);
+            }
+            else if (varType == Type::VOID){
+                context.addVarType(varName, 4);
+            }
+            else if (varType == Type::DOUBLE){
+                context.addVarType(varName, 5);
+            }
+            else if (varType == Type::UNSIGNED_INT){
+                context.addVarType(varName, 6);
+            }
         }
 
         std::string getName()const{
@@ -565,7 +681,7 @@ class FunctionDeclaration: public ASTNode{
             const FuncWithArgs* funcwithargs = dynamic_cast<const FuncWithArgs*>(funcName);
 
             if (identifier != nullptr){ //check if f(), else its probably f(int x, int y)
-                std::cout<<"Flag rrr"<<std::endl;
+               
                 std::string funcID = identifier->getID();
                 os << ".globl "<< funcID << std::endl;
                 os << funcID <<":"<< std::endl;
@@ -638,31 +754,69 @@ class FunctionDefinition: public ASTNode{
         ASTNodePtr statements;
 };
 
-// class Assign: public ASTNode{
-//     public:
-//         enum OperatorType{
-//             SIMPLE_ASSIGN,
-//             MUL_ASSIGN,
-//             DIV_ASSIGN,
-//             MOD_ASSIGN,
-//             ADD_ASSIGN,
-//             SUB_ASSIGN,
-//             LEFT_ASSIGN,
-//             RIGHT_ASSIGN,
-//             AND_ASSIGN,
-//             XOR_ASSIGN,
-//             OR_ASSIGN
-//         };
-//         Assign(ASTNodePtr _left, OperatorType _op, ASTNodePtr _right):{
-//                      
-//         }
-//         void compile(std::ostream& os, int dstReg, Context& context) const override{
-//         }
-//     private:
-//         ASTNodePtr right;
-//         ASTNodePtr left;
-//         ASTNodePtr op;
-// };
+class Assign: public ASTNode{
+    public:
+        Assign(ASTNodePtr _left, char _op, ASTNodePtr _right):left(_left), right(_right), op(_op){
+            std::cout << "Assign Called" << std::endl;
+        }
+
+        void compile(std::ostream& os, int dstReg, Context& context) const override{
+
+            const Identifier* leftIdent = dynamic_cast<const Identifier*>(left); //x = 3, try cast x (ASTNodePtr 'left') to an Identifier
+            if(leftIdent != nullptr){
+                leftIdent->compile(os, dstReg, context); 
+                os << "lw a4, "<< leftIdent->getOffset(context) << "(s0)" << std::endl;
+            }
+            const IntLiteral* rightVal = dynamic_cast<const IntLiteral*>(right);
+            if(rightVal != nullptr){
+                rightVal->compile(os, dstReg, context);
+            }
+            else{
+                right->compile(os, dstReg, context);
+            }
+            
+
+            switch (op){
+                case '=':
+                    os << "sw a5, "<< leftIdent->getOffset(context) << "(s0)" <<std::endl;
+                    break;
+                case '*':
+                    os << "mul aX, aX, t" << std::endl;
+                    break;
+                case '/':
+                    os << "div aX, aX, t" << std::endl;
+                    break;
+                case '%':
+                    os << "rem aX, aX, t" << std::endl;
+                    break;
+                case '+':
+                    os << "add aX, aX, t" << std::endl;
+                    break;
+                case '-':
+                    os << "sub aX, aX, t" << std::endl;
+                    break;
+                case '<':
+                    os << "sll aX, aX, t" <<  std::endl;
+                    break;
+                case '>':
+                    os << "sra aX, aX, t"<<  std::endl;
+                    break;
+                case '&':
+                    os << "and aX, aX, t"<<  std::endl;
+                    break;
+                case 'x':
+                    os << "xor aX, aX, t"<< std::endl;
+                    break;
+                case '|':
+                    os << "or aX, aX, t"<<  std::endl;
+                    break;
+                }
+        }
+    private:
+        ASTNodePtr right;
+        ASTNodePtr left;
+        char op;
+};
 
 
 class CompoundStatement: public ASTNode {

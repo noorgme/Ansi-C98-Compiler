@@ -23,16 +23,18 @@ void yyerror(const char *);
   NodeList* listptr;
   DeclList* declList;
   initDeclarator* initDecl;
+  double floatlit;
+  char c;
 
 }
 
-%token INT_LITERAL
+%token INT_LITERAL FLOAT_LITERAL
 
 %token IDENTIFIER CONSTANT STRING_LITERAL SIZEOF
 %token PTR_OP INC_OP DEC_OP LEFT_OP RIGHT_OP LE_OP GE_OP EQ_OP NE_OP
 %token AND_OP OR_OP MUL_ASSIGN DIV_ASSIGN MOD_ASSIGN ADD_ASSIGN
 %token SUB_ASSIGN LEFT_ASSIGN RIGHT_ASSIGN AND_ASSIGN
-%token XOR_ASSIGN OR_ASSIGN TYPE_NAME
+%token XOR_ASSIGN OR_ASSIGN TYPE_NAME 
 
 %token TYPEDEF EXTERN STATIC AUTO REGISTER
 %token CHAR SHORT INT LONG SIGNED UNSIGNED FLOAT DOUBLE CONST VOLATILE VOID
@@ -71,9 +73,12 @@ void yyerror(const char *);
 %type <node> identifier_list initializer_list
 %type <listptr> declaration_list statement_list
 
-%type <number> INT_LITERAL
+%type <c> MUL_ASSIGN DIV_ASSIGN MOD_ASSIGN ADD_ASSIGN SUB_ASSIGN LEFT_ASSIGN RIGHT_ASSIGN AND_ASSIGN assignment_operator
 
+%type <number> INT_LITERAL
+%type <floatlit> FLOAT_LITERAL
 %type <string> IDENTIFIER
+
 
 %type <node> CASE DEFAULT IF ELSE SWITCH WHILE DO FOR GOTO CONTINUE BREAK RETURN
 %type <scoper> compound_statement
@@ -114,6 +119,7 @@ declaration_specifiers
 primary_expression
 	: IDENTIFIER {$$ = new Identifier(*$1);}
 	| INT_LITERAL {$$ = new IntLiteral($1);}
+	| FLOAT_LITERAL {$$ = new FloatLiteral($1);}
 	| STRING_LITERAL
 	| '(' expression ')' {$$=$2;}
 	;
@@ -223,21 +229,21 @@ conditional_expression
 
 assignment_expression
 	: conditional_expression { $$ = $1; }
-	| unary_expression assignment_operator assignment_expression
+	| unary_expression assignment_operator assignment_expression {$$ = new Assign($1, $2, $3);}
 	;
 
 assignment_operator
-	: '='
-	| MUL_ASSIGN
-	| DIV_ASSIGN
-	| MOD_ASSIGN
-	| ADD_ASSIGN
-	| SUB_ASSIGN
-	| LEFT_ASSIGN
-	| RIGHT_ASSIGN
-	| AND_ASSIGN
-	| XOR_ASSIGN
-	| OR_ASSIGN
+	: '=' {$$ = '=' ;}
+	| MUL_ASSIGN {$$ = '*';}
+	| DIV_ASSIGN  {$$ = '/';}
+	| MOD_ASSIGN  {$$ = '%'; }
+	| ADD_ASSIGN {$$ = '+';}
+	| SUB_ASSIGN  {$$ = '-';}
+	| LEFT_ASSIGN  {$$ = '<';}
+	| RIGHT_ASSIGN {$$ = '>';}
+	| AND_ASSIGN  {$$ = '&';}
+	| XOR_ASSIGN  {$$ = 'x';}
+	| OR_ASSIGN  {$$ = '|';}
 	;
 
 expression
@@ -277,8 +283,8 @@ type_specifier
 	| SHORT
 	| INT {$$ = new Type(Type::INT);}
 	| LONG
-	| FLOAT
-	| DOUBLE
+	| FLOAT {$$ = new Type(Type::FLOAT);}
+	| DOUBLE {$$ = new Type(Type::DOUBLE);}
 	| SIGNED
 	| UNSIGNED {$$ = new Type(Type::UNSIGNED_INT);}
 	| struct_or_union_specifier
@@ -496,5 +502,5 @@ const ASTNode *parseAST(){
 	yyparse();
 	return g_root;
 	
-}
+};
 

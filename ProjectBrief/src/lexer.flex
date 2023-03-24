@@ -64,6 +64,10 @@ L?'(\\.|[^\\'])+'	{return(CONSTANT); }
 
 L?\"(\\.|[^\\"])*\"	{ return(STRING_LITERAL); }
 
+{D}+{E}{FS}? { yylval.floatlit=strtod(yytext, NULL); return FLOAT_LITERAL; }
+{D}*"."{D}+({E})?{FS}? { yylval.floatlit=strtod(yytext, NULL); return FLOAT_LITERAL; }
+{D}+"."{D}*({E})?{FS}? { yylval.floatlit=strtod(yytext, NULL); return FLOAT_LITERAL; }
+
 "..."			{ return(ELLIPSIS); }
 ">>="			{ return(RIGHT_ASSIGN); }
 "<<="			{ return(LEFT_ASSIGN); }
