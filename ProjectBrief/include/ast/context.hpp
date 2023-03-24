@@ -54,6 +54,7 @@ class Context {
                 return 0;
             }
         }
+        
 
         void resetRegMap(){
             usedReg.clear();

@@ -28,7 +28,7 @@ void yyerror(const char *);
 
 }
 
-%token INT_LITERAL FLOAT_LITERAL
+%token INT_LITERAL FLOAT_LITERAL HEX_LITERAL
 
 %token IDENTIFIER CONSTANT STRING_LITERAL SIZEOF
 %token PTR_OP INC_OP DEC_OP LEFT_OP RIGHT_OP LE_OP GE_OP EQ_OP NE_OP
@@ -73,9 +73,9 @@ void yyerror(const char *);
 %type <node> identifier_list initializer_list
 %type <listptr> declaration_list statement_list
 
-%type <c> MUL_ASSIGN DIV_ASSIGN MOD_ASSIGN ADD_ASSIGN SUB_ASSIGN LEFT_ASSIGN RIGHT_ASSIGN AND_ASSIGN assignment_operator
+%type <c> MUL_ASSIGN DIV_ASSIGN MOD_ASSIGN ADD_ASSIGN SUB_ASSIGN LEFT_ASSIGN RIGHT_ASSIGN AND_ASSIGN assignment_operator LE_OP
 
-%type <number> INT_LITERAL
+%type <number> INT_LITERAL HEX_LITERAL
 %type <floatlit> FLOAT_LITERAL
 %type <string> IDENTIFIER
 
@@ -119,6 +119,7 @@ declaration_specifiers
 primary_expression
 	: IDENTIFIER {$$ = new Identifier(*$1);}
 	| INT_LITERAL {$$ = new IntLiteral($1);}
+	| HEX_LITERAL {$$ = new IntLiteral($1);}
 	| FLOAT_LITERAL {$$ = new FloatLiteral($1);}
 	| STRING_LITERAL
 	| '(' expression ')' {$$=$2;}
@@ -244,6 +245,7 @@ assignment_operator
 	| AND_ASSIGN  {$$ = '&';}
 	| XOR_ASSIGN  {$$ = 'x';}
 	| OR_ASSIGN  {$$ = '|';}
+	| LE_OP {$$ = 'l';}
 	;
 
 expression

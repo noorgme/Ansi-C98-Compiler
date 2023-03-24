@@ -133,8 +133,15 @@ public:
         std::string reg;
         if (context.checkUsedReg("a0")){
             if (context.checkUsedReg("a1")){
-                reg = "a2";
-                context.addUsedReg("a2");
+                if (context.checkUsedReg("a2")){
+                    reg = "a3";
+                    context.addUsedReg("a3");
+                }
+                else{
+                    reg = "a2";
+                    context.addUsedReg("a2");
+                }
+
             }
             else{
                 reg = "a1";
@@ -152,6 +159,7 @@ public:
         }
         else if (context.getVarType(str) == 1){
             //INT
+            std::cout<<"doing overwrite"<<std::endl;
             os<<"sw "<<reg<<", "<<varOffset<<"(s0)"<<std::endl;
         }
         else if (context.getVarType(str) == 3){
@@ -348,6 +356,9 @@ class BinaryOperator: public ASTNode{
                 std::cout<<"BinaryOperator(right) is an Identifier" <<std::endl;
                 //std::cout << "BinaryOperator(right) has value: " << context.getVariableValue(rightValIdent->getID())<< std::endl;
                 type = leftValIdent->getVarType(context);
+
+                
+
                 if (type == 5){
                     //DOUBLE
                     os<<"fld fa5, "<<rightValIdent->getOffset(context)<<"(s0)"<<std::endl;
@@ -482,8 +493,9 @@ public:
             std::cout<<"returning: "<<returnval<<std::endl;
             int offset = returnvalidentifier->getOffset(context);
             //load from memory into a5
-            returnvalidentifier->compile(os, 10, context);
-            os<<"lw a5, "<<offset<<"(sp)"<<std::endl;
+            std::cout<<"doing here"<<std::endl;
+            //returnvalidentifier->compile(os, 10, context);
+            //os<<"lw a5, "<<offset<<"(sp)"<<std::endl;
         }
         else if (returnvalsizeof != nullptr){
             int size;
@@ -763,13 +775,20 @@ class Assign: public ASTNode{
         void compile(std::ostream& os, int dstReg, Context& context) const override{
 
             const Identifier* leftIdent = dynamic_cast<const Identifier*>(left); //x = 3, try cast x (ASTNodePtr 'left') to an Identifier
-            if(leftIdent != nullptr){
+            if(leftIdent != nullptr){//left should always be identifier
                 leftIdent->compile(os, dstReg, context); 
-                os << "lw a4, "<< leftIdent->getOffset(context) << "(s0)" << std::endl;
+                std::string reg;
+                if (context.checkUsedReg("a4")){reg = "a5";}
+                else{reg = "a4";context.addUsedReg("a4");}
+                os << "lw "<<reg<<", "<< leftIdent->getOffset(context) << "(s0)" << std::endl;
             }
             const IntLiteral* rightVal = dynamic_cast<const IntLiteral*>(right);
+            const BinaryOperator* rightValBinary = dynamic_cast<const BinaryOperator*>(right);
             if(rightVal != nullptr){
                 rightVal->compile(os, dstReg, context);
+            }
+            else if(rightValBinary != nullptr){
+                rightValBinary->compile(os, dstReg, context);
             }
             else{
                 right->compile(os, dstReg, context);
@@ -809,6 +828,12 @@ class Assign: public ASTNode{
                     break;
                 case '|':
                     os << "or aX, aX, t"<<  std::endl;
+                    break;
+                case 'l':
+                    os<< "sgt a5, a4, a5" <<std::endl;
+                    os<< "xori a5, a5, 1" <<std::endl;
+                    os<< "andi a5, a5, 0xff" <<std::endl;
+                    //os<< "sw a5, -20(s0)" <<std::endl;
                     break;
                 }
         }

@@ -52,7 +52,8 @@ IS			(u|U|l|L)*
 
 {L}({L}|{D})*		{yylval.string = new std::string(yytext); return (IDENTIFIER); }
 
-0[xX]{H}+{IS}?		{ return(CONSTANT); }
+0[xX][0-9a-fA-F]+   { yylval.number = (int)strtol(yytext, nullptr, 16); return HEX_LITERAL; }
+
 0{D}+{IS}?		{ return(CONSTANT); }
 {D}+{IS}?		{ yylval.number = atoi(yytext); return(INT_LITERAL); }
 
